@@ -1,0 +1,53 @@
+
+Fill in the info and submit the softcopy together with your source code.
+
+------------------------------------------------------------
+
+What is your demo time slot (e.g., 14:30PM)? Answer: 
+
+What programming language did you use? Answer: 
+
+Roughly how many lines of code does your system have? Answer: 
+
+Do you use RMI or socket for your system? Answer (RMI/socket):
+
+-------------------------------------------------------------
+
+What is Team Member 1's matriculation number (not nusnetid!)? 
+
+Answer: 
+
+What is Team Member 1's name (exactly as appeared as on IVLE)?
+
+Answer: 
+
+How many lines of code did Team Member 1 write for this assignment?
+
+Answer: 
+
+Which part of the assignment did Team Member 1 do?
+
+Answer:
+
+
+-------------------------------------------------------------
+
+What is Team Member 2's matriculation number (not nusnetid!)?
+
+Answer: 
+
+What is Team Member 2's name (exactly as appeared as on IVLE)?
+
+Answer: 
+
+How many lines of code did Team Member 2 write for this assignment?
+
+Answer: 
+
+Which part of the assignment did Team Member 2 do?
+
+Answer:
+
+
+--------------------------------------------------------------
+
