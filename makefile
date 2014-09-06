@@ -1,13 +1,16 @@
 CXX=g++
-CXXFLAGS=-g3 -O0 -Wall -c -std=c++1y -pthread
-LDFLAGS=-pthread
-EXEC=test
+CXXFLAGS=-g3 -O0 -Wall -c -std=c++1y -fpermissive
+LDFLAGS=
+EXEC=server client
 SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)
 
 all: $(EXEC)
 
-test: $(OBJ)
+server: mainServer.o ServerThread.o ServerThread.h
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+client: mainClient.o ClientThread.o ClientThread.h
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
