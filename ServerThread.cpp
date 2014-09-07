@@ -1,4 +1,6 @@
 #include <iostream>
+#include <thread>
+
 #include <cstdlib>
 #include <unistd.h>
 #include <cstring>
@@ -32,11 +34,9 @@ void ServerThread::startConnection(){
 	struct addrinfo hints, *servinfo, *p;
 	struct sockaddr_storage their_addr; // connector's address information
 	char s[INET6_ADDRSTRLEN];
-	char buf[MAXDATASIZE];
 	socklen_t sin_size;
 	int yes=1;
 	int rv;
-	int numbytes;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC; // use IPv4 or IPv6 (use AF_INET for IPv4  or AF_INET6 for IPv6)
@@ -82,31 +82,42 @@ void ServerThread::startConnection(){
 
 	cout << "server: waiting for connections..." << endl;
 	
-	sin_size = sizeof(their_addr);
-	newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-	if (newfd == -1) {
-		throw string("accept");
+	while(true){
+		sin_size = sizeof(their_addr);
+		newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+		if (newfd == -1) {
+			throw string("accept");
+		}
+
+		inet_ntop(their_addr.ss_family,	get_in_addr((struct sockaddr *)&their_addr),s, sizeof(s));
+		cout << "server: got connection from " << s << endl;
+		
+		thread t = thread(echoing, newfd);
+		t.detach();
 	}
 
-	inet_ntop(their_addr.ss_family,	get_in_addr((struct sockaddr *)&their_addr),s, sizeof(s));
-	cout << "server: got connection from " << s << endl;
-	
-	if (send(newfd, "Hello, world!", 13, 0) == -1){
+	close(sockfd);
+}
+
+void ServerThread::echoing(int inSockFd){
+	char buf[MAXDATASIZE];
+	int numbytes;
+
+	if (send(inSockFd, "Hello, world!", 13, 0) == -1){
+		close(inSockFd);
 		throw string("send");
 	}
 
 	while(true){
-		if((numbytes = recv(newfd, buf, MAXDATASIZE-1, 0)) == -1){
-			close(newfd);
-			close(sockfd);
+		if((numbytes = recv(inSockFd, buf, MAXDATASIZE-1, 0)) == -1){
+			close(inSockFd);
 			throw string("recv");
 		}
 
 		buf[numbytes] = '\0';
 
-		if (send(newfd, buf, numbytes, 0) == -1){
-			close(newfd);
-			close(sockfd);
+		if (send(inSockFd, buf, numbytes, 0) == -1){
+			close(inSockFd);
 			throw string("send");
 		}
 		if(strcmp(buf,"exit")==0){
@@ -115,6 +126,5 @@ void ServerThread::startConnection(){
 		}
 	}
 
-	close(newfd);
-	close(sockfd);
+	close(inSockFd);
 }
