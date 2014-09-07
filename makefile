@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-g3 -O0 -Wall -c -std=c++1y -fpermissive
+CXXFLAGS=-g3 -O0 -Wall -c -std=c++1y
 LDFLAGS=
 EXEC=server client
 SRC=$(wildcard *.cpp)

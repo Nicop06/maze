@@ -1,11 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
+#include <cstdlib>
 #include <unistd.h>
-#include <string.h>
+#include <cstring>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <sys/types.h>
 
 #include "ServerThread.h"
 
@@ -13,7 +12,9 @@
 #define BACKLOG 10
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
-void *get_in_addr(struct sockaddr *sa)
+using namespace std;
+
+void* ServerThread::get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {
         return &(((struct sockaddr_in*)sa)->sin_addr);
@@ -43,25 +44,24 @@ void ServerThread::startConnection(){
 	hints.ai_flags = AI_PASSIVE; // use my IP address
 
 	if ((rv = getaddrinfo(NULL, "3490", &hints, &servinfo)) != 0) {
-	    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-	    exit(1);
+		throw string("getaddrinfo: ", gai_strerror(rv));
 	}
 
 	// loop through all the results and bind to the first we can
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-			perror("socket");
+			cerr << "socket" << endl;
 			continue;
 		}
 		
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-			perror("setsockopt");
-			exit(1);
+			cerr << "setsockopt" << endl;
+			continue;
 		}
 
 		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
 			close(sockfd);
-			perror("bind");
+			cerr << "bind" << endl;
 			continue;
 		}
 
@@ -70,53 +70,51 @@ void ServerThread::startConnection(){
 
 	if (p == NULL) {
     	// looped off the end of the list with no successful bind
-    		fprintf(stderr, "failed to bind socket\n");
-    		exit(2);
+		throw string("failed to bind socket");
 	}
 
-	printf("Local socket bound to port\n");
+	cout << "Local socket bound to port" << endl;
 	freeaddrinfo(servinfo); // all done with this structure
 	
 	if (listen(sockfd, BACKLOG) == -1) {
-		perror("listen");
-		exit(1);
+		throw string("listen");
 	}
 
-	printf("server: waiting for connections...\n");
+	cout << "server: waiting for connections..." << endl;
 	
 	sin_size = sizeof(their_addr);
 	newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
 	if (newfd == -1) {
-		perror("accept");
-		exit(1);
+		throw string("accept");
 	}
 
 	inet_ntop(their_addr.ss_family,	get_in_addr((struct sockaddr *)&their_addr),s, sizeof(s));
-	printf("server: got connection from %s\n", s);
+	cout << "server: got connection from " << s << endl;
 	
 	if (send(newfd, "Hello, world!", 13, 0) == -1){
-		perror("send");
-		exit(1);
+		throw string("send");
 	}
 
-	while(1){
-		numbytes = recv(newfd, buf, MAXDATASIZE-1, 0);
-		if(recv == -1){
-			perror("recv");
-			break;
+	while(true){
+		if((numbytes = recv(newfd, buf, MAXDATASIZE-1, 0)) == -1){
+			close(newfd);
+			close(sockfd);
+			throw string("recv");
 		}
+
 		buf[numbytes] = '\0';
+
 		if (send(newfd, buf, numbytes, 0) == -1){
-			perror("send");
-			break;
+			close(newfd);
+			close(sockfd);
+			throw string("send");
 		}
 		if(strcmp(buf,"exit")==0){
-			printf("Client exited connection\n");
+			cout << "Client exited connection" << endl;
 			break;
 		}
 	}
 
 	close(newfd);
 	close(sockfd);
-
 }

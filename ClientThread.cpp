@@ -1,43 +1,26 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 #include <unistd.h>
-#include <string.h>
+#include <string>
+#include <cstring>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <sys/types.h>
 
 #include "ClientThread.h"
 
 #define PORT "3490" // the port client will be connecting to 
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
+using namespace std;
+
 // get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
+void* ClientThread::get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {
         return &(((struct sockaddr_in*)sa)->sin_addr);
     }
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
-
-static void flush(void)
-{
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF)
-    {}
-}
-
-static void clean(char *s)
-{
-    char *p = strchr(s, '\n');
-    if (p){
-        *p = 0;
-    }else{
-        flush();
-    }
 }
 
 ClientThread::ClientThread() {}
@@ -51,9 +34,9 @@ void ClientThread::startConnection(int argc, char* argv[]){
 	int rv;
 	char s[INET6_ADDRSTRLEN];
 
-	if (argc != 2) {
-		fprintf(stderr,"usage: client hostname\n");
-		exit(1);
+	if (argc < 2) {
+		cerr << "usage: client hostname" << endl;
+		return;
 	}
 
 	memset(&hints, 0, sizeof hints);
@@ -61,63 +44,60 @@ void ClientThread::startConnection(int argc, char* argv[]){
 	hints.ai_socktype = SOCK_STREAM;
 
 	if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-		return;
+		throw string("getaddrinfo: ", gai_strerror(rv));
 	}
 
 	// loop through all the results and connect to the first we can
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype,p->ai_protocol)) == -1) {
-			perror("client: socket");
+			cerr << "client: socket" << endl;
 			continue;
 		}
 
 		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
 			close(sockfd);
-			perror("client: connect");
+			cerr << "client: connect" << endl;
 			continue;
 		}
 		break;//we found a socket
 	}
 
 	if (p == NULL) {
-		fprintf(stderr, "client: failed to connect\n");
-		return;
+		throw string("client: failed to connect");
 	}
 	
-	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),s, sizeof s);
-	printf("client: connecting to %s\n", s);
+	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),s, sizeof(s)); //put server's IP address into char[] s
+	cout << "client: connecting to " << s << endl;
 
 	freeaddrinfo(servinfo); // all done with this structure
 	
 	//first message reception from the server
 	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-		perror("recv");
-		exit(1);
+		throw string("recv");
 	}
 
 	buf[numbytes] = '\0';
-	printf("client: received '%s'\n",buf);
+	cout << "client: received '" << buf << "'" << endl;
 
-	while(1){
-		fgets(buf, MAXDATASIZE-1,stdin);
-		clean(buf);
-
+	while(true){
+		cin.getline(buf, MAXDATASIZE);
+		
 		if (send(sockfd, buf, strlen(buf), 0) == -1){ //we send the content of buf
-			perror("send");
-			break;
+			close(sockfd);
+			throw string("send");
 		}
-		if(strcmp(buf, "exit")==0){
-			printf("Exiting connection\n");
+		if(strcmp(buf,"exit")==0){
+			cout << "Exiting connection" << endl;
 			break; //if "exit", we exit the loop
 		}
 
 		if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) { //we receive the server's message
-			perror("recv");
-			exit(1);
+			close(sockfd);
+			throw string("recv");
 		}
+
 		buf[numbytes] = '\0';
-		printf("client: received '%s'\n",buf);
+		cout << "client: received '" << buf << "'" << endl;
 	}	
 
 	close(sockfd);
