@@ -1,10 +1,12 @@
 #include <iostream>
 #include <thread>
+#include <algorithm>
 
 #include <cstdlib>
 #include <unistd.h>
 #include <cstring>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 
@@ -29,21 +31,17 @@ ServerThread::ServerThread() {}
 
 ServerThread::~ServerThread() {}
 
-void ServerThread::startConnection(){
-	int sockfd, newfd; //sockfd : listening socket, newfd : incoming socket
+void ServerThread::initConnection(){
 	struct addrinfo hints, *servinfo, *p;
-	struct sockaddr_storage their_addr; // connector's address information
-	char s[INET6_ADDRSTRLEN];
-	socklen_t sin_size;
 	int yes=1;
 	int rv;
-
+	
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC; // use IPv4 or IPv6 (use AF_INET for IPv4  or AF_INET6 for IPv6)
 	hints.ai_socktype = SOCK_STREAM; //TCP
 	hints.ai_flags = AI_PASSIVE; // use my IP address
 
-	if ((rv = getaddrinfo(NULL, "3490", &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
 		throw string("getaddrinfo: ", gai_strerror(rv));
 	}
 
@@ -79,29 +77,81 @@ void ServerThread::startConnection(){
 	if (listen(sockfd, BACKLOG) == -1) {
 		throw string("listen");
 	}
+}
 
+void ServerThread::acceptConnections(){
+	struct timeval tv; //timeval for timeout in select
+	fd_set readfds; //file descriptor set of readable sockets
+	
+	
+	FD_ZERO(&readfds); //clear fd set
+	FD_SET(sockfd, &readfds); //add listening server socket to the fd set
+
+	tv.tv_sec = 20;
+	tv.tv_usec = 0;
+
+	//faire un select avec timeout(temps_restant) et un while(temps_restant>0);
 	cout << "server: waiting for connections..." << endl;
 	
-	while(true){
-		sin_size = sizeof(their_addr);
-		newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-		if (newfd == -1) {
-			throw string("accept");
+	//accepting first connection
+	acceptInSock();
+
+	cout << "Countdown begins" << endl;
+
+	while(tv.tv_sec>0 || tv.tv_usec>0){
+		if (select(sockfd+1, &readfds, NULL, NULL, &tv) == -1) {
+			throw string("select");		
 		}
 
-		inet_ntop(their_addr.ss_family,	get_in_addr((struct sockaddr *)&their_addr),s, sizeof(s));
-		cout << "server: got connection from " << s << endl;
-		
-		thread t = thread(echoing, newfd);
-		t.detach();
+		if(FD_ISSET(sockfd,&readfds)){
+			//incoming new socket waiting for accept()
+			acceptInSock();
+		}else{
+			//time out or
+			//incoming socket waiting for recv() : already handled by a thread
+			FD_ZERO(&readfds); //clear fd set
+			FD_SET(sockfd, &readfds); //add listening server socket to the fd set	
+		}
 	}
 
 	close(sockfd);
+	cout << "Timeout elapsed" << endl;
+
+	vect_mutex.lock();
+	cout << inSockFds.size() << " client(s) connected" << endl;
+	vect_mutex.unlock();
+
+	while(true){} //à modifier
+}
+
+void ServerThread::acceptInSock(){
+	int newfd; //newfd : incoming socket
+	struct sockaddr_storage their_addr; // connector's address information
+	char s[INET6_ADDRSTRLEN];
+	socklen_t sin_size;
+	thread t;
+	
+	sin_size = sizeof(their_addr);
+	newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+	if (newfd == -1) {
+		throw string("accept");
+	}
+
+	inet_ntop(their_addr.ss_family,	get_in_addr((struct sockaddr *)&their_addr),s, sizeof(s));
+	cout << "server: got connection from " << s << endl;
+		
+	vect_mutex.lock();
+	inSockFds.push_back(newfd);
+	vect_mutex.unlock();
+
+	t = thread(&ServerThread::echoing,this,newfd);
+	t.detach();
 }
 
 void ServerThread::echoing(int inSockFd){
 	char buf[MAXDATASIZE];
 	int numbytes;
+	vector<int>::iterator it;
 
 	if (send(inSockFd, "Hello, world!", 13, 0) == -1){
 		close(inSockFd);
@@ -113,18 +163,27 @@ void ServerThread::echoing(int inSockFd){
 			close(inSockFd);
 			throw string("recv");
 		}
+		if(numbytes==0){
+			cout << "Client exited connection" << endl;
+			break;
+		}
 
 		buf[numbytes] = '\0';
-
-		if (send(inSockFd, buf, numbytes, 0) == -1){
-			close(inSockFd);
-			throw string("send");
-		}
 		if(strcmp(buf,"exit")==0){
 			cout << "Client exited connection" << endl;
 			break;
 		}
+		if (send(inSockFd, buf, numbytes, 0) == -1){
+			close(inSockFd);
+			throw string("send");
+		}
+		
 	}
 
 	close(inSockFd);
+
+	vect_mutex.lock();
+	it = find(inSockFds.begin(), inSockFds.end(), inSockFd);
+	inSockFds.erase(it);
+	vect_mutex.unlock();
 }

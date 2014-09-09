@@ -1,6 +1,6 @@
 CXX=g++
-CXXFLAGS=-g3 -O0 -Wall -c -std=c++1y -pthread
-LDFLAGS=-pthread
+CXXFLAGS=-g3 -O0 -Wall -c -std=gnu++11 -pthread
+LDFLAGS=-std=gnu++11 -pthread
 EXEC=server client
 SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)

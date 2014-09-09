@@ -8,7 +8,8 @@ using namespace std;
 int main(int argc, char* argv[]) {
 	ServerThread st = ServerThread();
 	try{
-		st.startConnection();
+		st.initConnection();
+		st.acceptConnections();
 	} catch(string const& e){
 		cerr << "Error : " << e << endl;
 	}

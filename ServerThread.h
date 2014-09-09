@@ -1,9 +1,18 @@
+#include <vector>
+#include <thread>
+#include <mutex>
+
 class ServerThread {
 public:
 	ServerThread();
 	~ServerThread();
-	void startConnection();
+	void initConnection();
+	void acceptConnections();
 	static void* get_in_addr(struct sockaddr *sa);
 private:
-	static void echoing(int inSockFd);
+	int sockfd;
+	std::vector<int> inSockFds;
+	std::mutex vect_mutex;
+	void acceptInSock();
+	void echoing(int inSockFd);
 };
