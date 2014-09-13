@@ -6,7 +6,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-	ServerThread st = ServerThread();
+	ServerThread st;
 	try{
 		st.initConnection();
 		st.acceptConnections();

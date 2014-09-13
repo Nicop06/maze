@@ -6,7 +6,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-	ClientThread ct = ClientThread();
+	ClientThread ct;
 	try{
 		ct.startConnection(argc, argv);
 	}catch(string const& e){
