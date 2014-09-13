@@ -1,16 +1,16 @@
 CXX=g++
 CXXFLAGS=-g3 -O0 -Wall -c -std=gnu++11 -pthread
 LDFLAGS=-std=gnu++11 -pthread
-EXEC=server client
+EXEC=maze_server maze_client
 SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)
 
 all: $(EXEC)
 
-server: mainServer.o ServerThread.o ServerThread.h
+maze_server: mainServer.o ServerThread.o ServerThread.h
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-client: mainClient.o ClientThread.o ClientThread.h
+maze_client: mainClient.o ClientThread.o ClientThread.h
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp

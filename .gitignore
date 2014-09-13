@@ -1,5 +1,5 @@
 *.o
 *~
-server
-client
+maze_server
+maze_client
 
