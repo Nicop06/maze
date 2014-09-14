@@ -5,12 +5,18 @@ EXEC=maze_server maze_client
 SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)
 
+SERVER_SRC=mainServer.cpp ServerThread.cpp ServerThread.h
+SERVER_OBJ=$(SERVER_SRC:.cpp=.o)
+
+CLIENT_SRC=mainClient.cpp ClientThread.cpp ClientThread.h
+CLIENT_OBJ=$(CLIENT_SRC:.cpp=.o)
+
 all: $(EXEC)
 
-maze_server: mainServer.o ServerThread.o ServerThread.h
+maze_server: $(SERVER_OBJ)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-maze_client: mainClient.o ClientThread.o ClientThread.h
+maze_client: $(CLIENT_OBJ)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
