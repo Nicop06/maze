@@ -11,33 +11,23 @@
 #include <ostream>
 #include <iostream>
 
-class GameState
-{
+class GameState {
   public:
     GameState(int N, int M);
     ~GameState();
 
-    void lock()
-    {
-      state_mutex.lock();
-    }
+    void initTreasures();
 
-    void unlock()
-    {
-      state_mutex.unlock();
-    }
+    void lock() { state_mutex.lock(); }
+    void unlock() { state_mutex.unlock(); }
 
     Player* addPlayer(int id);
     void removePlayer(int id);
 
     bool updatePosition(Player* player, int new_x, int new_y);
+    inline bool checkBounds(int x, int y) const;
 
-    bool checkBounds(int x, int y)
-    {
-      return x >= 0 && y >= 0 && x < N && y < N;
-    }
-
-    void print();
+    void print() const;
 
     friend std::ostream& operator<<(std::ostream& stream, const GameState& gameState);
 

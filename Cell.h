@@ -1,24 +1,16 @@
 #ifndef _CELL_GUARD
 #define _CELL_GUARD
 
-class Cell
-{
+class Cell {
   public:
     Cell(int x, int y) : mx(x), my(y) {}
     virtual ~Cell() {};
 
-    int x()
-    {
-      return mx;
-    }
+    int x() const { return mx; }
+    int y() const { return my; }
 
-    int y()
-    {
-      return my;
-    }
-
-    virtual bool isTreasure() = 0;
-    virtual bool isPlayer() = 0;
+    virtual bool isTreasure() const = 0;
+    virtual bool isPlayer() const = 0;
 
   protected:
     // The position of the cell

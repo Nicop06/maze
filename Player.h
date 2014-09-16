@@ -9,32 +9,14 @@ class GameState;
 class Player: public Cell {
   public:
     Player(int x, int y, int id, GameState* gameState)
-      : Cell(x, y), mId(id), pGameState(gameState), T(0) {}
+      : Cell(x, y), mId(id), pGameState(gameState) {}
     ~Player() {}
 
-    int nbTreasures()
-    {
-      return T;
-    }
+    void incNbTreasures() { T++; }
+    int id() const { return mId; }
 
-    void incNbTreasures()
-    {
-      T++;
-    }
-
-    int id() {
-      return mId;
-    }
-
-    bool isTreasure()
-    {
-      return false;
-    }
-
-    bool isPlayer()
-    {
-      return true;
-    }
+    bool isTreasure() const { return false; }
+    bool isPlayer() const { return true; }
 
     void move(char dir);
 

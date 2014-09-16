@@ -2,8 +2,7 @@
 #include <random>
 #include <chrono>
 
-GameState::GameState(int N, int M) : N(N), M(M), T(0), treasures(M)
-{
+GameState::GameState(int N, int M) : N(N), M(M), T(0), treasures(M) {
   grid = new Cell**[N];
   for (int i = 0; i < N; i++) {
     grid[i] = new Cell*[N];
@@ -11,26 +10,9 @@ GameState::GameState(int N, int M) : N(N), M(M), T(0), treasures(M)
 
   if (M > N * N)
     return;
-
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::minstd_rand generator(seed);
-  std::uniform_int_distribution<int> distribution(0, N-1);
-
-  while (T < M) {
-    int x = distribution(generator);
-    int y = distribution(generator);
-
-    if (!grid[x][y]) {
-      Treasure* treasure = new Treasure(x, y);
-      grid[x][y] = treasure;
-      treasures.insert(treasure);
-      T++;
-    }
-  }
 }
 
-GameState::~GameState()
-{
+GameState::~GameState() {
   for (Treasure* treasure: treasures)
     delete treasure;
 
@@ -49,8 +31,25 @@ GameState::~GameState()
   delete[] grid;
 }
 
-bool GameState::updatePosition(Player* player, int new_x, int new_y)
-{
+void GameState::initTreasures() {
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::minstd_rand generator(seed);
+  std::uniform_int_distribution<int> distribution(0, N-1);
+
+  while (T < M) {
+    int x = distribution(generator);
+    int y = distribution(generator);
+
+    if (!grid[x][y]) {
+      Treasure* treasure = new Treasure(x, y);
+      grid[x][y] = treasure;
+      treasures.insert(treasure);
+      T++;
+    }
+  }
+}
+
+bool GameState::updatePosition(Player* player, int new_x, int new_y) {
   if (checkBounds(new_x, new_y)) {
     Cell* cell = grid[new_x][new_y];
 
@@ -71,8 +70,11 @@ bool GameState::updatePosition(Player* player, int new_x, int new_y)
   return false;
 }
 
-Player* GameState::addPlayer(int id)
-{
+bool GameState::checkBounds(int x, int y) const {
+  return x >= 0 && y >= 0 && x < N && y < N;
+}
+
+Player* GameState::addPlayer(int id) {
   if (T + P >= N * N)
     return NULL;
 
@@ -94,8 +96,7 @@ Player* GameState::addPlayer(int id)
   }
 }
 
-void GameState::removePlayer(int id)
-{
+void GameState::removePlayer(int id) {
   Player* player = players[id];
 
   int x(player->x());
@@ -107,8 +108,7 @@ void GameState::removePlayer(int id)
   delete player;
 }
 
-void GameState::print()
-{
+void GameState::print() const {
   for (int y = 0; y < N; y++) {
     for (int x = 0; x < N; x++) {
       Cell* cell = grid[x][y];
@@ -126,8 +126,7 @@ void GameState::print()
   }
 }
 
-std::ostream& operator<<(std::ostream& stream, const GameState& gameState)
-{
+std::ostream& operator<<(std::ostream& stream, const GameState& gameState) {
   stream << htonl(gameState.T) << htonl(gameState.P);
 
   for (Treasure* treasure: gameState.treasures)

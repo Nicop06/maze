@@ -5,21 +5,13 @@
 #include <ostream>
 #include <arpa/inet.h>
 
-class Treasure: public Cell
-{
+class Treasure: public Cell {
   public:
     Treasure(int x, int y) : Cell(x, y) {}
     ~Treasure() {}
 
-    bool isTreasure()
-    {
-      return true;
-    }
-
-    bool isPlayer()
-    {
-      return false;
-    }
+    bool isTreasure() const { return true; }
+    bool isPlayer() const { return false; }
 
     friend std::ostream& operator<<(std::ostream& stream, const Treasure& treasure);
 };

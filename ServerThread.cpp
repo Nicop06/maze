@@ -102,6 +102,7 @@ void ServerThread::acceptConnections(){
 		if (select(sockfd+1, &readfds, NULL, NULL, &tv) == -1) {
 			throw string("select");		
 		}
+    cout << tv.tv_sec;
 
 		if(FD_ISSET(sockfd,&readfds)){
 			//incoming new socket waiting for accept()
