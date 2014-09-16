@@ -6,10 +6,10 @@ SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)
 INC=$(wildcard *.h)
 
-SERVER_SRC=mainServer.cpp ServerThread.cpp GameState.cpp Player.cpp
+SERVER_SRC=mainServer.cpp ServerThread.cpp GameState.cpp Player.cpp Treasure.cpp
 SERVER_OBJ=$(SERVER_SRC:.cpp=.o)
 
-CLIENT_SRC=mainClient.cpp ClientThread.cpp test.h
+CLIENT_SRC=mainClient.cpp ClientThread.cpp
 CLIENT_OBJ=$(CLIENT_SRC:.cpp=.o)
 
 all: $(EXEC)
@@ -26,6 +26,7 @@ maze_client: $(CLIENT_OBJ)
 # Headers dependencies
 GameState.o: GameState.h Cell.h Player.h Treasure.h
 Player.o: GameState.h Cell.h Player.h Treasure.h
+Treasure.o: Treasure.h
 ServerThread.o: ServerThread.h
 ServerMain.o: ServerThread.h
 ClientThread.o: ClientThread.h

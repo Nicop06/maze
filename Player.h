@@ -2,6 +2,7 @@
 #define _PLAYER_GUARD
 
 #include "Cell.h"
+#include <ostream>
 
 class GameState;
 
@@ -37,6 +38,8 @@ class Player: public Cell {
 
     void move(char dir);
 
+    friend std::ostream& operator<<(std::ostream& stream, const Player& player);
+
   private:
     // The id of the player
     int mId;
@@ -47,5 +50,7 @@ class Player: public Cell {
     // The number of treasures
     int T;
 };
+
+std::ostream& operator<<(std::ostream& stream, const Player& player);
 
 #endif

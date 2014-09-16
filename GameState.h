@@ -8,6 +8,7 @@
 #include <mutex>
 #include <unordered_set>
 #include <unordered_map>
+#include <ostream>
 #include <iostream>
 
 class GameState
@@ -38,6 +39,8 @@ class GameState
 
     void print();
 
+    friend std::ostream& operator<<(std::ostream& stream, const GameState& gameState);
+
   private:
     std::mutex state_mutex;
 
@@ -62,5 +65,7 @@ class GameState
     // The players
     std::unordered_map<int, Player*> players;
 };
+
+std::ostream& operator<<(std::ostream& stream, const GameState& gameState);
 
 #endif

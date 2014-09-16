@@ -2,6 +2,8 @@
 #define _TREASURE_GUARD
 
 #include "Cell.h"
+#include <ostream>
+#include <arpa/inet.h>
 
 class Treasure: public Cell
 {
@@ -18,6 +20,10 @@ class Treasure: public Cell
     {
       return false;
     }
+
+    friend std::ostream& operator<<(std::ostream& stream, const Treasure& treasure);
 };
+
+std::ostream& operator<<(std::ostream& stream, const Treasure& treasure);
 
 #endif

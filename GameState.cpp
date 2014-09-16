@@ -125,3 +125,18 @@ void GameState::print()
     std::cout << std::endl;
   }
 }
+
+std::ostream& operator<<(std::ostream& stream, const GameState& gameState)
+{
+  stream << htonl(gameState.T) << htonl(gameState.P);
+
+  for (Treasure* treasure: gameState.treasures)
+    stream << treasure;
+
+  for (const auto& pair: gameState.players) {
+    Player* player = pair.second;
+    stream << player;
+  }
+
+  return stream;
+}

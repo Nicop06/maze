@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "GameState.h"
+#include <arpa/inet.h>
 
 void Player::move(char dir)
 {
@@ -34,4 +35,10 @@ void Player::move(char dir)
   }
 
   pGameState->unlock();
+}
+
+std::ostream& operator<<(std::ostream& stream, const Player& player)
+{
+  stream << htonl(player.mId) << htonl(player.mx) << htonl(player.my) << htonl(player.T);
+  return stream;
 }
