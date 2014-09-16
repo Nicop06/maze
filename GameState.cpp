@@ -106,3 +106,22 @@ void GameState::removePlayer(int id)
 
   delete player;
 }
+
+void GameState::print()
+{
+  for (int y = 0; y < N; y++) {
+    for (int x = 0; x < N; x++) {
+      Cell* cell = grid[x][y];
+      if (cell) {
+        if (cell->isTreasure()) {
+          std::cout << "T";
+        } else {
+          std::cout << "P";
+        }
+      } else {
+        std::cout << "*";
+      }
+    }
+    std::cout << std::endl;
+  }
+}
