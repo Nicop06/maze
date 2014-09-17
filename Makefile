@@ -1,12 +1,12 @@
 CXX=g++
-CXXFLAGS=-g3 -O0 -Wall -c -std=gnu++11 -pthread
-LDFLAGS=-std=gnu++11 -pthread
+CXXFLAGS+=-g3 -O3 -Wall -Wextra -c -std=gnu++11 -pthread
+LDFLAGS+=-std=gnu++11 -pthread
 EXEC=maze_server maze_client
 SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)
 INC=$(wildcard *.h)
 
-SERVER_SRC=mainServer.cpp ServerThread.cpp GameState.cpp Player.cpp Treasure.cpp
+SERVER_SRC=mainServer.cpp ServerThread.cpp GameState.cpp Player.cpp Cell.cpp PlayerManager.cpp
 SERVER_OBJ=$(SERVER_SRC:.cpp=.o)
 
 CLIENT_SRC=mainClient.cpp ClientThread.cpp
@@ -26,11 +26,12 @@ maze_client: $(CLIENT_OBJ)
 # Headers dependencies
 GameState.o: GameState.h Cell.h Player.h Treasure.h
 Player.o: GameState.h Cell.h Player.h Treasure.h
-Treasure.o: Treasure.h
+Cell.o: Cell.h
 ServerThread.o: ServerThread.h
 ServerMain.o: ServerThread.h
 ClientThread.o: ClientThread.h
 ClientMain.o: ClientThread.h
+PlayerManager.o: PlayerManager.h
 
 .PHONY: clean mrproper
 

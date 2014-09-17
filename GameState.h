@@ -8,8 +8,8 @@
 #include <mutex>
 #include <unordered_set>
 #include <unordered_map>
-#include <ostream>
 #include <iostream>
+#include <arpa/inet.h>
 
 class GameState {
   public:
@@ -18,18 +18,14 @@ class GameState {
 
     void initTreasures();
 
-    void lock() { state_mutex.lock(); }
-    void unlock() { state_mutex.unlock(); }
-
     Player* addPlayer(int id);
     void removePlayer(int id);
 
-    bool updatePosition(Player* player, int new_x, int new_y);
+    void updatePosition(Player* player, int new_x, int new_y);
     inline bool checkBounds(int x, int y) const;
 
     void print() const;
-
-    friend std::ostream& operator<<(std::ostream& stream, const GameState& gameState);
+    std::string getState();
 
   private:
     std::mutex state_mutex;
@@ -55,7 +51,5 @@ class GameState {
     // The players
     std::unordered_map<int, Player*> players;
 };
-
-std::ostream& operator<<(std::ostream& stream, const GameState& gameState);
 
 #endif

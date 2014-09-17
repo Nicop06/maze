@@ -3,9 +3,8 @@
 #include <arpa/inet.h>
 
 void Player::move(char dir) {
-  int new_x = mx, new_y = my;
-
-  pGameState->lock();
+  new_x = mx;
+  new_y = my;
 
   switch(dir) {
     case 'S':
@@ -28,15 +27,24 @@ void Player::move(char dir) {
       break;
   }
 
-  if (pGameState->updatePosition(this, new_x, new_y)) {
+  pGameState->updatePosition(this, new_x, new_y);
+}
+
+void Player::updatePosition() {
+  if (new_x >= 0 && new_y >= 0) {
     mx = new_x;
     my = new_y;
+    new_x = -1;
+    new_y = -1;
   }
-
-  pGameState->unlock();
 }
 
-std::ostream& operator<<(std::ostream& stream, const Player& player) {
-  stream << htonl(player.mId) << htonl(player.mx) << htonl(player.my) << htonl(player.T);
-  return stream;
+std::string Player::getState() {
+  std::string state;
+  state.append(htonl(mId), 4);
+  state.append(htonl(T), 4);
+  state += Cell::getState();
+
+  return state;
 }
+

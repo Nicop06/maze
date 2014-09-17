@@ -12,10 +12,6 @@ class Treasure: public Cell {
 
     bool isTreasure() const { return true; }
     bool isPlayer() const { return false; }
-
-    friend std::ostream& operator<<(std::ostream& stream, const Treasure& treasure);
 };
-
-std::ostream& operator<<(std::ostream& stream, const Treasure& treasure);
 
 #endif

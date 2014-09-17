@@ -82,7 +82,7 @@ void ClientThread::startConnection(int argc, char* argv[]){
 	while(true){
 		cin.getline(buf, MAXDATASIZE);
 		
-		if (send(sockfd, buf, strlen(buf), 0) == -1){ //we send the content of buf
+		if (send(sockfd, buf, strlen(buf)+1, 0) == -1){ //we send the content of buf
 			close(sockfd);
 			throw string("send");
 		}
@@ -97,7 +97,7 @@ void ClientThread::startConnection(int argc, char* argv[]){
 		}
 
 		buf[numbytes] = '\0';
-		cout << "client: received '" << buf << "'" << endl;
+		cout << "client: received '" << numbytes << " bytes: " << buf << "'" << endl;
 	}	
 
 	close(sockfd);

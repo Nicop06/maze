@@ -13,6 +13,7 @@ GameState::GameState(int N, int M) : N(N), M(M), T(0), treasures(M) {
 }
 
 GameState::~GameState() {
+  std::lock_guard<std::mutex> lck(state_mutex);
   for (Treasure* treasure: treasures)
     delete treasure;
 
@@ -32,6 +33,7 @@ GameState::~GameState() {
 }
 
 void GameState::initTreasures() {
+  std::lock_guard<std::mutex> lck(state_mutex);
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::minstd_rand generator(seed);
   std::uniform_int_distribution<int> distribution(0, N-1);
@@ -49,7 +51,9 @@ void GameState::initTreasures() {
   }
 }
 
-bool GameState::updatePosition(Player* player, int new_x, int new_y) {
+void GameState::updatePosition(Player* player, int new_x, int new_y) {
+  std::lock_guard<std::mutex> lck(state_mutex);
+
   if (checkBounds(new_x, new_y)) {
     Cell* cell = grid[new_x][new_y];
 
@@ -63,11 +67,9 @@ bool GameState::updatePosition(Player* player, int new_x, int new_y) {
 
       grid[player->x()][player->y()] = NULL;
       grid[new_x][new_y] = player;
-      return true;
+      player->updatePosition();
     }
   }
-
-  return false;
 }
 
 bool GameState::checkBounds(int x, int y) const {
@@ -75,6 +77,7 @@ bool GameState::checkBounds(int x, int y) const {
 }
 
 Player* GameState::addPlayer(int id) {
+  std::lock_guard<std::mutex> lck(state_mutex);
   if (T + P >= N * N)
     return NULL;
 
@@ -97,15 +100,18 @@ Player* GameState::addPlayer(int id) {
 }
 
 void GameState::removePlayer(int id) {
+  std::lock_guard<std::mutex> lck(state_mutex);
   Player* player = players[id];
 
-  int x(player->x());
-  int y(player->y());
+  if (player) {
+    int x(player->x());
+    int y(player->y());
 
-  if (grid[x][y] == player)
-    grid[x][y] = NULL;
+    if (grid[x][y] == player)
+      grid[x][y] = NULL;
 
-  delete player;
+    delete player;
+  }
 }
 
 void GameState::print() const {
@@ -126,16 +132,21 @@ void GameState::print() const {
   }
 }
 
-std::ostream& operator<<(std::ostream& stream, const GameState& gameState) {
-  stream << htonl(gameState.T) << htonl(gameState.P);
+std::string GameState::getState() {
+  std::lock_guard<std::mutex> lck(state_mutex);
+  std::string state;
 
-  for (Treasure* treasure: gameState.treasures)
-    stream << treasure;
+  state.append(htonl(T), 4);
+  state.append(htonl(P), 4);
 
-  for (const auto& pair: gameState.players) {
+  for (Treasure* treasure: treasures)
+    state += treasure->getState();
+
+  for (const auto& pair: players) {
     Player* player = pair.second;
-    stream << player;
+    state += player->getState();
   }
 
-  return stream;
+  return state;
 }
+
