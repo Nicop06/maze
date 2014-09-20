@@ -9,8 +9,6 @@ GameState::GameState(int N, int M) : N(N), M(M), T(0), P(0), treasures(M) {
     grid[i] = new Cell*[N];
   }
 
-  if (M > N * N)
-    return;
 }
 
 GameState::~GameState() {
@@ -38,6 +36,9 @@ void GameState::initTreasures() {
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::minstd_rand generator(seed);
   std::uniform_int_distribution<int> distribution(0, N-1);
+
+  if (M > N * N)
+    throw std::string("Cannot create treasures");
 
   while (T < M) {
     int x = distribution(generator);
@@ -93,7 +94,7 @@ Player* GameState::addPlayer(int id) {
     if (!grid[x][y]) {
       Player* player = new Player(x, y, id, this);
       grid[x][y] = player;
-      players.insert(std::make_pair(id, player));
+      players[id] = player;
       ++P;
       return player;
     }
@@ -112,24 +113,6 @@ void GameState::removePlayer(int id) {
       grid[x][y] = NULL;
 
     delete player;
-  }
-}
-
-void GameState::print() const {
-  for (int y = 0; y < N; ++y) {
-    for (int x = 0; x < N; ++x) {
-      Cell* cell = grid[x][y];
-      if (cell) {
-        if (cell->isTreasure()) {
-          std::cout << "T";
-        } else {
-          std::cout << "P";
-        }
-      } else {
-        std::cout << "*";
-      }
-    }
-    std::cout << std::endl;
   }
 }
 

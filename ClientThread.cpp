@@ -25,13 +25,10 @@ void ClientThread::init(const char* host, const char* port) {
   memset(&hints, 0, sizeof(struct addrinfo));
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = 0;
-  hints.ai_protocol = 0;
 
   int s = getaddrinfo(host, port, &hints, &result);
-  if (s != 0) {
-		throw std::string("getaddrinfo: ", gai_strerror(s));
-  }
+  if (s != 0)
+    throw std::string("getaddrinfo: ", gai_strerror(s));
 
   // Try to connect to the list of addresses returned by getaddrinfo()
 
@@ -47,7 +44,7 @@ void ClientThread::init(const char* host, const char* port) {
   }
 
   if (rp == NULL)
-		throw std::string("Couldn't connect to server.");
+    throw std::string("Couldn't connect to server.");
 
   freeaddrinfo(result);
 
@@ -59,7 +56,7 @@ void ClientThread::exit() {
     const char msg[] = "exit";
     const int len = sizeof(msg);
     running = false;
-		send(sockfd, msg, len, 0);
+    send(sockfd, msg, len, 0);
     close(sockfd);
   }
 }
@@ -91,11 +88,14 @@ void ClientThread::loop() {
   char buf[BUFSIZE];
   int len;
 
+  if (!running)
+    return;
+
   if (send(sockfd, "join", sizeof("join"), 0) == -1)
     exit();
 
   while (running && buffer.length() < 8) {
-		if ((len = recv(sockfd, buf, BUFSIZE, 0)) == -1) {
+    if ((len = recv(sockfd, buf, BUFSIZE, 0)) == -1) {
       exit();
       return;
     }
@@ -109,14 +109,16 @@ void ClientThread::loop() {
     int N = ntohl(*(data+1));
     buffer.erase(0, 8);
 
-    if (N > MAXSIZE)
+    if (N > MAXSIZE) {
       exit();
+      return;
+    }
 
     view->init(id, N);
   }
 
   while (running) {
-		if ((len = recv(sockfd, buf, BUFSIZE, 0)) <= 0) {
+    if ((len = recv(sockfd, buf, BUFSIZE, 0)) <= 0) {
       exit();
       return;
     }

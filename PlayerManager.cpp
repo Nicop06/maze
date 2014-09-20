@@ -1,4 +1,5 @@
 #include "PlayerManager.h"
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <algorithm>
@@ -13,22 +14,30 @@ PlayerManager::~PlayerManager() {
 }
 
 void PlayerManager::init() {
-  running = true;
   player = gameState.addPlayer(sockfd);
-  msg_thread = std::thread(&PlayerManager::processMessage, this);
+
+  if (player) {
+    running = true;
+    std::cout << "Connection with client " << player->id() << std::endl;
+    msg_thread = std::thread(&PlayerManager::processMessage, this);
+  } else {
+    throw std::string("Cannot create player");
+  }
 }
 
 void PlayerManager::stop() {
-  std::cout << "Closing connection with client " << player->id() << std::endl;
-  running = false;
-  cv.notify_one();
+  if (running) {
+    std::cout << "Closing connection with client " << player->id() << std::endl;
+    running = false;
+    cv.notify_one();
 
-  if (msg_thread.joinable())
-    msg_thread.join();
-  close(sockfd);
+    if (msg_thread.joinable())
+      msg_thread.join();
+    close(sockfd);
+  }
 }
 
-void PlayerManager::addMessage(std::string msg) {
+void PlayerManager::addMessage(const std::string& msg) {
   if (!running)
     return;
 
@@ -65,12 +74,25 @@ void PlayerManager::processMessage() {
         return;
       }
 
+      if (cmd == "join") {
+        std::string msg;
+        int id = htonl(player->id());
+        int N = htonl(gameState.getSize());
+        msg.append((char*) &id, 4);
+        msg.append((char*) &N, 4);
+        if (send(sockfd, msg.data(), msg.size(), 0) == -1) {
+          std::cerr << "Error while sending the state to client " << player->id() << std::endl;
+          stop();
+          return;
+        }
+      }
+
       if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W")
           player->move(cmd[0]);
 
       std::string state = gameState.getState();
       if (send(sockfd, state.data(), state.size(), 0) == -1) {
-        std::cerr <<"Error while sending the state to client " << player->id() << std::endl;
+        std::cerr << "Error while sending the state to client " << player->id() << std::endl;
         stop();
         return;
       }

@@ -1,18 +1,32 @@
+#ifndef _SERVERTHREAD_GUARD
+#define _SERVERTHREAD_GUARD
+
+#include "GameState.h"
+#include "PlayerManager.h"
+#include "config.h"
+
 #include <vector>
-#include <thread>
-#include <mutex>
+#include <map>
+#include <poll.h>
 
 class ServerThread {
-public:
-	ServerThread();
-	~ServerThread();
-	void initConnection();
-	void acceptConnections();
-	static void* get_in_addr(struct sockaddr *sa);
-private:
-	int sockfd;
-	std::vector<int> inSockFds;
-	std::mutex vect_mutex;
-	void acceptInSock();
-	void echoing(int inSockFd);
+  public:
+    ServerThread(int N, int M);
+    ~ServerThread();
+
+    void init(const char* port = PORT);
+    void acceptClients();
+    void loop();
+    void exit();
+
+  private:
+    int sockfd;
+    std::vector<struct pollfd> fds;
+    
+    GameState gameState;
+    std::map<int, PlayerManager*> pms;
+
+    static bool running;
 };
+
+#endif

@@ -12,7 +12,7 @@ class ClientThread {
     ClientThread();
     ~ClientThread();
 
-    void init(const char* host, const char* port = S_PORT);
+    void init(const char* host, const char* port = PORT);
     void exit();
     void loop();
     void move(char dir);

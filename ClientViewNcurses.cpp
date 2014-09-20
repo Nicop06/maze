@@ -10,6 +10,7 @@ ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread)
 ClientViewNcurses::~ClientViewNcurses() {
   if (running) {
     running = false;
+    nodelay(stdscr, TRUE);
     loop_th.join();
   }
 

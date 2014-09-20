@@ -29,9 +29,9 @@ GameState.o: GameState.h Cell.h Player.h Treasure.h
 Player.o: GameState.h Cell.h Player.h Treasure.h
 Cell.o: Cell.h
 ServerThread.o: ServerThread.h config.h
-ServerMain.o: ServerThread.h
+mainServer.o: ServerThread.h
 ClientThread.o: ClientThread.h config.h
-ClientMain.o: ClientThread.h ClientView.h
+mainClient.o: ClientThread.h ClientView.h
 PlayerManager.o: PlayerManager.h
 ClientViewNcurses.o: ClientViewNcurses.h ClientView.h ClientThread.h
 

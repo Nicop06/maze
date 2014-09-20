@@ -24,8 +24,8 @@ class GameState {
     void updatePosition(Player* player, int new_x, int new_y);
     inline bool checkBounds(int x, int y) const;
 
-    void print() const;
     std::string getState();
+    int getSize() const { return N; }
 
   private:
     std::mutex state_mutex;

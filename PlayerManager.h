@@ -18,9 +18,7 @@ class PlayerManager
 
     void init();
     void stop();
-    void addMessage(std::string msg);
-
-    bool closed() const { return running == false; }
+    void addMessage(const std::string& msg);
 
   private:
     int sockfd;
