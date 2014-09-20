@@ -3,17 +3,19 @@
 
 #include "ClientView.h"
 
+#include <thread>
+#include <atomic>
 #include <ncurses.h>
 
 class ClientViewNcurses : public ClientView {
   public:
-    ClientViewNcurses(int id, ClientThread& clientThread);
+    ClientViewNcurses(ClientThread& clientThread);
     ~ClientViewNcurses();
     
-    void init(int N);
+    void init(int id, int N);
 
     // Update the view
-    bool update(std::string state);
+    int update(const std::string& state);
 
   private:
     // The size of the game
@@ -21,6 +23,13 @@ class ClientViewNcurses : public ClientView {
 
     // The windows
     WINDOW* win;
+
+    // The main thread
+    std::thread loop_th;
+    std::atomic<bool> running;
+
+    // The main loop
+    void loop();
 };
 
 #endif

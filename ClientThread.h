@@ -1,7 +1,30 @@
+#ifndef _CLIENTTHREAD_GUARD
+#define _CLIENTTHREAD_GUARD
+
+#include "config.h"
+#include "ClientView.h"
+
+#include <thread>
+#include <atomic>
+
 class ClientThread {
-public:
-	ClientThread();
-	~ClientThread();
-	void startConnection(int argc, char* argv[]);
-	static void* get_in_addr(struct sockaddr *sa);
+  public:
+    ClientThread();
+    ~ClientThread();
+
+    void init(const char* host, const char* port = S_PORT);
+    void exit();
+    void loop();
+    void move(char dir);
+
+  private:
+    ClientView* view;
+
+    int sockfd;
+
+    std::string buffer;
+
+    std::atomic<bool> running;
 };
+
+#endif

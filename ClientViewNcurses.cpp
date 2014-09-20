@@ -1,57 +1,91 @@
 #include "ClientViewNcurses.h"
+#include "ClientThread.h"
 
 #include <arpa/inet.h>
 
-ClientViewNcurses::ClientViewNcurses(int id, ClientThread& clientThread)
-  : ClientView(id, clientThread), win(NULL) {
-  initscr();
-  cbreak();
-  noecho();
-  curs_set(0);
-  keypad(stdscr, TRUE);
+ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread)
+  : ClientView(clientThread), N(0), win(NULL), running(false) {
 }
  
 ClientViewNcurses::~ClientViewNcurses() {
+  if (running) {
+    running = false;
+    loop_th.join();
+  }
+
   endwin();
 }
 
-void ClientViewNcurses::init(int N) {
-  if (this->N != N) {
+void ClientViewNcurses::init(int id, int N) {
+  if (!running && N != 0) {
     this->N = N;
-    if (win) {
-      wclear(win);
-      delwin(win);
-    }
+    this->id = id;
 
-    refresh();
+    initscr();
+    cbreak();
+    noecho();
+    curs_set(0);
+    keypad(stdscr, TRUE);
+
     win = newwin(N+2, 2*N+2, 2, 2);
-    box(win, 0, 0);
-    wrefresh(win);
+
+    running = true;
+    loop_th = std::thread(&ClientViewNcurses::loop, this);
   }
 }
 
-bool ClientViewNcurses::update(std::string state) {
-  if (state.size() < 8 || !win)
-    return false;
+void ClientViewNcurses::loop() {
+  int c;
+
+  while((c = getch()) != 'q' && running) {
+    char dir = 0;
+
+    switch (c) {
+      case KEY_UP:
+        dir = 'N';
+        break;
+      case KEY_DOWN:
+        dir = 'S';
+        break;
+      case KEY_LEFT:
+        dir = 'W';
+        break;
+      case KEY_RIGHT:
+        dir = 'E';
+        break;
+    }
+
+    if (dir != 0)
+      clientThread.move(dir);
+  }
+
+  clientThread.exit();
+}
+
+int ClientViewNcurses::update(const std::string& state) {
+  if (state.size() < 8 || !win || !running)
+    return -1;
 
   const int* data = (int*) state.data();
   const int* max_data;
 
   int T = ntohl(*data);
   int P = ntohl(*(data + 1));
+  unsigned int size = 8 * T + 4 * P + 8;
 
   data += 2;
   max_data = data + 2 * T;
 
-  //if (state.size() < (unsigned)(8 * T + 4 * P + 8))
-    //return false;
+  if (state.size() < size || (T+P) > N*N)
+    return -1;
 
   int maxx, maxy, begx, begy;
   getmaxyx(win, maxy, maxx);
   getbegyx(win, begy, begx);
 
-  wclear(win);
+  clear();
   box(win, 0, 0);
+  mvprintw(0, 0, "Presss 'q' to exit");
 
   for ( ; data < max_data; data += 2) {
     int x = ntohl(*data);
@@ -81,5 +115,5 @@ bool ClientViewNcurses::update(std::string state) {
   refresh();
   wrefresh(win);
 
-  return true;
+  return size;
 }

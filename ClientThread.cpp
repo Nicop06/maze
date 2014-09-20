@@ -1,105 +1,131 @@
-#include <iostream>
-#include <unistd.h>
-#include <string>
-#include <cstring>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <arpa/inet.h>
+#include <unistd.h>
+#include <cstring>
+
+#include <string>
+#include <iostream>
 
 #include "ClientThread.h"
+#include "ClientViewNcurses.h"
 
-#define PORT "3490" // the port client will be connecting to 
-#define MAXDATASIZE 100 // max number of bytes we can get at once 
+ClientThread::ClientThread() {
+  view = new ClientViewNcurses(*this);
+}
 
-using namespace std;
+ClientThread::~ClientThread() {
+  exit();
+  delete view;
+}
 
-// get sockaddr, IPv4 or IPv6:
-void* ClientThread::get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
+void ClientThread::init(const char* host, const char* port) {
+  struct addrinfo hints, *result, *rp;
+
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = 0;
+  hints.ai_protocol = 0;
+
+  int s = getaddrinfo(host, port, &hints, &result);
+  if (s != 0) {
+		throw std::string("getaddrinfo: ", gai_strerror(s));
+  }
+
+  // Try to connect to the list of addresses returned by getaddrinfo()
+
+  for (rp = result; rp != NULL; rp = rp->ai_next) {
+    sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+    if (sockfd == -1)
+      continue;
+
+    if (connect(sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
+      break;
+
+    close(sockfd);
+  }
+
+  if (rp == NULL)
+		throw std::string("Couldn't connect to server.");
+
+  freeaddrinfo(result);
+
+  running = true;
+}
+
+void ClientThread::exit() {
+  if (running) {
+    const char msg[] = "exit";
+    const int len = sizeof(msg);
+    running = false;
+		send(sockfd, msg, len, 0);
+    close(sockfd);
+  }
+}
+
+void ClientThread::move(char dir) {
+  std::string msg;
+
+  switch (dir) {
+    case 'N':
+    case 'E':
+    case 'W':
+    case 'S':
+      msg += dir;
+      break;
+
+    case 0:
+      return;
+
+    default:
+      msg = "NoMove";
+      break;
+  }
+
+  if (send(sockfd, msg.data(), msg.length() + 1, 0) == -1)
+    exit();
+}
+
+void ClientThread::loop() {
+  char buf[BUFSIZE];
+  int len;
+
+  if (send(sockfd, "join", sizeof("join"), 0) == -1)
+    exit();
+
+  while (running && buffer.length() < 8) {
+		if ((len = recv(sockfd, buf, BUFSIZE, 0)) == -1) {
+      exit();
+      return;
     }
 
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    buffer.append(buf, len);
+  }
+
+  if (running) {
+    int* data = (int*) buffer.data();
+    int id = ntohl(*data);
+    int N = ntohl(*(data+1));
+    buffer.erase(0, 8);
+
+    if (N > MAXSIZE)
+      exit();
+
+    view->init(id, N);
+  }
+
+  while (running) {
+		if ((len = recv(sockfd, buf, BUFSIZE, 0)) <= 0) {
+      exit();
+      return;
+    }
+
+    buffer.append(buf, len);
+
+    len = view->update(buffer);
+    if (len > 0)
+      buffer.erase(0, len);
+  }
 }
 
-ClientThread::ClientThread() {}
-
-ClientThread::~ClientThread() {}
-
-void ClientThread::startConnection(int argc, char* argv[]){
-	int sockfd, numbytes;  
-	char buf[MAXDATASIZE];
-	struct addrinfo hints, *servinfo, *p;
-	int rv;
-	char s[INET6_ADDRSTRLEN];
-
-	if (argc < 2) {
-		cerr << "usage: client hostname" << endl;
-		return;
-	}
-
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-
-	if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
-		throw string("getaddrinfo: ", gai_strerror(rv));
-	}
-
-	// loop through all the results and connect to the first we can
-	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket(p->ai_family, p->ai_socktype,p->ai_protocol)) == -1) {
-			cerr << "client: socket" << endl;
-			continue;
-		}
-
-		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			close(sockfd);
-			cerr << "client: connect" << endl;
-			continue;
-		}
-		break;//we found a socket
-	}
-
-	if (p == NULL) {
-		throw string("client: failed to connect");
-	}
-	
-	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),s, sizeof(s)); //put server's IP address into char[] s
-	cout << "client: connecting to " << s << endl;
-
-	freeaddrinfo(servinfo); // all done with this structure
-	
-	//first message reception from the server
-	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-		throw string("recv");
-	}
-
-	buf[numbytes] = '\0';
-	cout << "client: received '" << buf << "'" << endl;
-
-	while(true){
-		cin.getline(buf, MAXDATASIZE);
-		
-		if (send(sockfd, buf, strlen(buf)+1, 0) == -1){ //we send the content of buf
-			close(sockfd);
-			throw string("send");
-		}
-		if(strcmp(buf,"exit")==0){
-			cout << "Exiting connection" << endl;
-			break; //if "exit", we exit the loop
-		}
-
-		if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) { //we receive the server's message
-			close(sockfd);
-			throw string("recv");
-		}
-
-		buf[numbytes] = '\0';
-		cout << "client: received '" << numbytes << " bytes: " << buf << "'" << endl;
-	}	
-
-	close(sockfd);
-
-}
