@@ -1,10 +1,11 @@
 #include "GameState.h"
+#include <arpa/inet.h>
 #include <random>
 #include <chrono>
 
-GameState::GameState(int N, int M) : N(N), M(M), T(0), treasures(M) {
+GameState::GameState(int N, int M) : N(N), M(M), T(0), P(0), treasures(M) {
   grid = new Cell**[N];
-  for (int i = 0; i < N; i++) {
+  for (int i = 0; i < N; ++i) {
     grid[i] = new Cell*[N];
   }
 
@@ -26,7 +27,7 @@ GameState::~GameState() {
 
   players.clear();
 
-  for (int i = 0; i < N; i++)
+  for (int i = 0; i < N; ++i)
     delete[] grid[i];
 
   delete[] grid;
@@ -46,7 +47,7 @@ void GameState::initTreasures() {
       Treasure* treasure = new Treasure(x, y);
       grid[x][y] = treasure;
       treasures.insert(treasure);
-      T++;
+      ++T;
     }
   }
 }
@@ -93,7 +94,7 @@ Player* GameState::addPlayer(int id) {
       Player* player = new Player(x, y, id, this);
       grid[x][y] = player;
       players.insert(std::make_pair(id, player));
-      P++;
+      ++P;
       return player;
     }
   }
@@ -115,8 +116,8 @@ void GameState::removePlayer(int id) {
 }
 
 void GameState::print() const {
-  for (int y = 0; y < N; y++) {
-    for (int x = 0; x < N; x++) {
+  for (int y = 0; y < N; ++y) {
+    for (int x = 0; x < N; ++x) {
       Cell* cell = grid[x][y];
       if (cell) {
         if (cell->isTreasure()) {
@@ -136,8 +137,11 @@ std::string GameState::getState() {
   std::lock_guard<std::mutex> lck(state_mutex);
   std::string state;
 
-  state.append(htonl(T), 4);
-  state.append(htonl(P), 4);
+  int nT = htonl(T);
+  int nP = htonl(P);
+
+  state.append((char*) &nT, 4);
+  state.append((char*) &nP, 4);
 
   for (Treasure* treasure: treasures)
     state += treasure->getState();

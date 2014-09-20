@@ -3,7 +3,11 @@
 
 std::string Cell::getState() {
   std::string state;
-  state.append(htonl(mx), 4);
-  state.append(htonl(my), 4);
+
+  int nx = htonl(mx);
+  int ny = htonl(my);
+
+  state.append((char*) &nx, 4);
+  state.append((char*) &ny, 4);
   return state;
 }

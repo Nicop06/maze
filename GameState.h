@@ -7,7 +7,7 @@
 
 #include <mutex>
 #include <unordered_set>
-#include <unordered_map>
+#include <map>
 #include <iostream>
 #include <arpa/inet.h>
 
@@ -49,7 +49,7 @@ class GameState {
     std::unordered_set<Treasure*> treasures;
 
     // The players
-    std::unordered_map<int, Player*> players;
+    std::map<int, Player*> players;
 };
 
 #endif

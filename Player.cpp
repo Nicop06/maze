@@ -41,8 +41,12 @@ void Player::updatePosition() {
 
 std::string Player::getState() {
   std::string state;
-  state.append(htonl(mId), 4);
-  state.append(htonl(T), 4);
+
+  int nid = htonl(mId);
+  int nT = htonl(T);
+
+  state.append((char*) &nid, 4);
+  state.append((char*) &nT, 4);
   state += Cell::getState();
 
   return state;
