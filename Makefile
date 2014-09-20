@@ -1,12 +1,13 @@
 CXX=g++
-CXXFLAGS+=-g3 -O3 -Wall -Wextra -c -std=gnu++11 -pthread
-LDFLAGS+=-std=gnu++11 -pthread
+DEBUG=-g3
+CXXFLAGS+=${DEBUG} -O3 -Wall -Wextra -c -std=gnu++11 -pthread
+LDFLAGS+=-std=gnu++11 -pthread -lncurses
 EXEC=maze_server maze_client
 SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)
 INC=$(wildcard *.h)
 
-SERVER_SRC=mainServer.cpp ServerThread.cpp GameState.cpp Player.cpp Cell.cpp PlayerManager.cpp
+SERVER_SRC=mainServer.cpp ServerThread.cpp GameState.cpp Player.cpp Cell.cpp PlayerManager.cpp ClientViewNcurses.cpp
 SERVER_OBJ=$(SERVER_SRC:.cpp=.o)
 
 CLIENT_SRC=mainClient.cpp ClientThread.cpp
@@ -32,6 +33,7 @@ ServerMain.o: ServerThread.h
 ClientThread.o: ClientThread.h
 ClientMain.o: ClientThread.h
 PlayerManager.o: PlayerManager.h
+ClientViewNcurses.o: ClientViewNcurses.h ClientView.h
 
 .PHONY: clean mrproper
 
