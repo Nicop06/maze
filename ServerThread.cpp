@@ -111,6 +111,9 @@ void ServerThread::loop() {
   while (running) {
     if (poll(fds.data(), fds.size(), 100) > 0) {
       for (uint32_t i = 0; i < fds.size(); ++i) {
+        if (!fds[i].revents)
+          continue;
+
         PlayerManager *pm = pms[fds[i].fd];
         if (pm) {
           if ((len = recv(fds[i].fd, buf, BUFSIZE, MSG_DONTWAIT)) == -1) {

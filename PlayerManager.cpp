@@ -42,10 +42,9 @@ void PlayerManager::addMessage(const std::string& msg) {
   if (!running)
     return;
 
-  msg_mx.lock();
+  std::unique_lock<std::mutex> lck(msg_mx);
   size_t nb_new = std::count(msg.begin(), msg.end(), '\0');
   buffer += msg;
-  msg_mx.unlock();
 
   if (nb_new > 0)
     nb_msg += nb_new;
@@ -54,15 +53,17 @@ void PlayerManager::addMessage(const std::string& msg) {
 }
 
 void PlayerManager::processMessage() {
-  std::unique_lock<std::mutex> lock(msg_mx, std::defer_lock);
   size_t pos, old_pos;
   std::string tmp, cmd;
 
   while (running) {
-    lock.lock();
-    cv.wait(lock, [=]{ return nb_msg > 0 || running; });
+    std::unique_lock<std::mutex> lck(msg_mx);
+    while (nb_msg <= 0 && running) cv.wait(lck);
     tmp.swap(buffer);
-    lock.unlock();
+    lck.unlock();
+
+    if (!running)
+      break;
 
     old_pos = 0;
 
