@@ -1,7 +1,9 @@
 #include "ClientViewNcurses.h"
 #include "ClientThread.h"
 
+#include <algorithm>
 #include <iostream>
+#include <sstream>
 #include <arpa/inet.h>
 
 ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread)
@@ -30,7 +32,7 @@ void ClientViewNcurses::init(int id, int N) {
     curs_set(0);
     keypad(stdscr, TRUE);
 
-    win = newwin(N+2, 2*N+2, 2, 2);
+    win = newwin(N+2, 2*N+1, 2, 2);
 
     running = true;
     loop_th = std::thread(&ClientViewNcurses::loop, this);
@@ -121,19 +123,18 @@ int ClientViewNcurses::update(const std::string& state) {
   }
 
   if (T == 0) {
-    wclear(win);
     std::string msg;
     if (best_id == id) {
       msg = "You won";
     } else {
-      msg = "Player ";
-      msg += best_id;
-      msg += " won";
+      std::ostringstream convert;
+      convert << "Player " << best_id << " won";
+      msg = convert.str();
     }
 
     wclear(win);
     box(win, 0, 0);
-    mvwprintw(win, (maxy - begy) / 2, (maxx - begx - msg.length()) / 2, msg.data());
+    mvwprintw(win, maxy / 2, std::max(1, (int)((maxx - msg.length()) / 2)), "%s", msg.data());
   }
 
   refresh();
