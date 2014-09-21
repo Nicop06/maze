@@ -11,6 +11,11 @@ PlayerManager::PlayerManager(int sockfd, GameState& gameState)
 
 PlayerManager::~PlayerManager() {
   stop();
+
+  if (msg_thread.joinable())
+    msg_thread.join();
+
+  close(sockfd);
 }
 
 void PlayerManager::init() {
@@ -27,13 +32,9 @@ void PlayerManager::init() {
 
 void PlayerManager::stop() {
   if (running) {
-    std::cout << "Closing connection with client " << player->id() << std::endl;
     running = false;
     cv.notify_one();
-
-    if (msg_thread.joinable())
-      msg_thread.join();
-    close(sockfd);
+    std::cout << "Closing connection with client " << player->id() << std::endl;
   }
 }
 
@@ -66,6 +67,7 @@ void PlayerManager::processMessage() {
     old_pos = 0;
 
     while ((pos = tmp.find('\0', old_pos)) != std::string::npos) {
+      std::string msg;
       cmd += tmp.substr(old_pos, pos - old_pos);
 
       if (cmd == "exit") {
@@ -75,24 +77,18 @@ void PlayerManager::processMessage() {
       }
 
       if (cmd == "join") {
-        std::string msg;
         int id = htonl(player->id());
         int N = htonl(gameState.getSize());
         msg.append((char*) &id, 4);
         msg.append((char*) &N, 4);
-
-        if (send(sockfd, msg.data(), msg.size(), 0) == -1) {
-          std::cerr << "Error while sending the state to client " << player->id() << std::endl;
-          stop();
-          return;
-        }
       }
 
       if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W")
           player->move(cmd[0]);
 
-      std::string state = gameState.getState();
-      if (send(sockfd, state.data(), state.size(), 0) <= 0) {
+      msg += gameState.getState();
+
+      if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
         std::cerr << "Error while sending the state to client " << player->id() << std::endl;
         stop();
         return;
@@ -107,4 +103,3 @@ void PlayerManager::processMessage() {
     tmp.erase();
   }
 }
-

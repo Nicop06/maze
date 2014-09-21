@@ -126,10 +126,8 @@ void ServerThread::loop() {
             pm->addMessage(msg);
           }
 
-          if (fds[i].revents & POLLHUP) {
-            pm->stop();
+          if (fds[i].revents & POLLHUP)
             delete pm;
-          }
         }
       }
     }
