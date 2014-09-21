@@ -1,10 +1,12 @@
 #include "ClientViewNcurses.h"
 #include "ClientThread.h"
 
+#include <iostream>
 #include <arpa/inet.h>
 
 ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread)
   : ClientView(clientThread), N(0), win(NULL), running(false) {
+  std::cout << "Waiting for game to start..." << std::endl;
 }
  
 ClientViewNcurses::~ClientViewNcurses() {
