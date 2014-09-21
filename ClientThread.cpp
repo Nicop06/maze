@@ -3,7 +3,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <cstring>
-#include <poll.h>
 
 #include <string>
 #include <iostream>
@@ -49,6 +48,9 @@ void ClientThread::init(const char* host, const char* port) {
 
   freeaddrinfo(result);
 
+  pfd.fd = sockfd;
+  pfd.events = POLLIN | POLLHUP;
+
   running = true;
 }
 
@@ -86,7 +88,6 @@ void ClientThread::move(char dir) {
 }
 
 void ClientThread::loop() {
-  char buf[BUFSIZE];
   int len;
 
   if (!running)
@@ -95,14 +96,9 @@ void ClientThread::loop() {
   if (send(sockfd, "join", sizeof("join"), 0) == -1)
     exit();
 
-  while (running && buffer.length() < 8) {
-    if ((len = recv(sockfd, buf, BUFSIZE, 0)) == -1) {
-      exit();
-      return;
-    }
-
-    buffer.append(buf, len);
-  }
+  // Wait for player id and game size
+  while (running && buffer.length() < 8)
+    read();
 
   if (running) {
     int* data = (int*) buffer.data();
@@ -118,29 +114,31 @@ void ClientThread::loop() {
     view->init(id, N);
   }
 
-  struct pollfd pfd;
-  pfd.fd = sockfd;
-  pfd.events = POLLIN | POLLHUP;
-
+  // Wait for new messages
   while (running) {
+    read();
+
     while ((len = view->update(buffer)) > 0)
       buffer.erase(0, len);
-
-    if (poll(&pfd, 1, 100) > 0) {
-      if (pfd.revents & POLLIN) {
-        if ((len = recv(sockfd, buf, BUFSIZE, 0)) <= 0) {
-          exit();
-          return;
-        }
-
-        buffer.append(buf, len);
-      }
-
-      if (pfd.revents & POLLHUP) {
-        exit();
-        return;
-      }
-    }
   }
 }
 
+void ClientThread::read() {
+  int len;
+
+  if (poll(&pfd, 1, 100) > 0) {
+    if (pfd.revents & POLLIN) {
+      if ((len = recv(sockfd, buf, BUFSIZE, 0)) <= 0) {
+        exit();
+        return;
+      }
+
+      buffer.append(buf, len);
+    }
+
+    if (pfd.revents & POLLHUP) {
+      exit();
+      return;
+    }
+  }
+}

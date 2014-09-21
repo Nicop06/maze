@@ -4,6 +4,8 @@
 #include "config.h"
 #include "ClientView.h"
 
+#include <poll.h>
+
 #include <thread>
 #include <atomic>
 
@@ -21,10 +23,14 @@ class ClientThread {
     ClientView* view;
 
     int sockfd;
+    struct pollfd pfd;
 
     std::string buffer;
+    char buf[BUFSIZE];
 
     std::atomic<bool> running;
+
+    void read();
 };
 
 #endif
