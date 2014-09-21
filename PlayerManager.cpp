@@ -80,6 +80,7 @@ void PlayerManager::processMessage() {
         int N = htonl(gameState.getSize());
         msg.append((char*) &id, 4);
         msg.append((char*) &N, 4);
+
         if (send(sockfd, msg.data(), msg.size(), 0) == -1) {
           std::cerr << "Error while sending the state to client " << player->id() << std::endl;
           stop();
@@ -91,7 +92,7 @@ void PlayerManager::processMessage() {
           player->move(cmd[0]);
 
       std::string state = gameState.getState();
-      if (send(sockfd, state.data(), state.size(), 0) == -1) {
+      if (send(sockfd, state.data(), state.size(), 0) <= 0) {
         std::cerr << "Error while sending the state to client " << player->id() << std::endl;
         stop();
         return;

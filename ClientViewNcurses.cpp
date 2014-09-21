@@ -72,7 +72,7 @@ int ClientViewNcurses::update(const std::string& state) {
 
   int T = ntohl(*data);
   int P = ntohl(*(data + 1));
-  unsigned int size = 8 * T + 4 * P + 8;
+  unsigned int size = 8 * T + 16 * P + 8;
 
   data += 2;
   max_data = data + 2 * T;
@@ -85,6 +85,7 @@ int ClientViewNcurses::update(const std::string& state) {
   getbegyx(win, begy, begx);
 
   clear();
+  wclear(win);
   box(win, 0, 0);
   mvprintw(0, 0, "Presss 'q' to exit");
 

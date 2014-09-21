@@ -118,16 +118,15 @@ void ClientThread::loop() {
   }
 
   while (running) {
+    while ((len = view->update(buffer)) > 0)
+      buffer.erase(0, len);
+
     if ((len = recv(sockfd, buf, BUFSIZE, 0)) <= 0) {
       exit();
       return;
     }
 
     buffer.append(buf, len);
-
-    len = view->update(buffer);
-    if (len > 0)
-      buffer.erase(0, len);
   }
 }
 
