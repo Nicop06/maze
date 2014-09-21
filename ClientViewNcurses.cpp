@@ -101,11 +101,15 @@ int ClientViewNcurses::update(const std::string& state) {
   data = max_data;
   max_data = data + 4 * P;
 
+  int best_id(id), best_score(0);
   for ( ; data < max_data; data += 4) {
     int p_id = ntohl(*data);
     int p_T = ntohl(*(data + 1));
     int x = ntohl(*(data + 2));
     int y = ntohl(*(data + 3));
+
+    if (p_T > best_score)
+      best_id = p_id;
 
     if (p_id != id) {
       mvprintw(++status_y, begx+1, "Player %d: %d", p_id, p_T);
@@ -114,7 +118,23 @@ int ClientViewNcurses::update(const std::string& state) {
       mvprintw(begy-1, begx+1, "Id: %d   Score: %d", p_id, p_T);
       mvwaddch(win, y+1, 2*x+1, 'Y');
     }
-  }  
+  }
+
+  if (T == 0) {
+    wclear(win);
+    std::string msg;
+    if (best_id == id) {
+      msg = "You won";
+    } else {
+      msg = "Player ";
+      msg += best_id;
+      msg += " won";
+    }
+
+    wclear(win);
+    box(win, 0, 0);
+    mvwprintw(win, (maxy - begy) / 2, (maxx - begx - msg.length()) / 2, msg.data());
+  }
 
   refresh();
   wrefresh(win);
