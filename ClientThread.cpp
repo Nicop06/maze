@@ -3,6 +3,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <cstring>
+#include <poll.h>
 
 #include <string>
 #include <iostream>
@@ -117,16 +118,29 @@ void ClientThread::loop() {
     view->init(id, N);
   }
 
+  struct pollfd pfd;
+  pfd.fd = sockfd;
+  pfd.events = POLLIN | POLLHUP;
+
   while (running) {
     while ((len = view->update(buffer)) > 0)
       buffer.erase(0, len);
 
-    if ((len = recv(sockfd, buf, BUFSIZE, 0)) <= 0) {
-      exit();
-      return;
-    }
+    if (poll(&pfd, 1, 100) > 0) {
+      if (pfd.revents & POLLIN) {
+        if ((len = recv(sockfd, buf, BUFSIZE, 0)) <= 0) {
+          exit();
+          return;
+        }
 
-    buffer.append(buf, len);
+        buffer.append(buf, len);
+      }
+
+      if (pfd.revents & POLLHUP) {
+        exit();
+        return;
+      }
+    }
   }
 }
 
