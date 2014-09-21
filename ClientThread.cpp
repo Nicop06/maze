@@ -127,18 +127,11 @@ void ClientThread::read() {
   int len;
 
   if (poll(&pfd, 1, 100) > 0) {
-    if (pfd.revents & POLLIN) {
-      if ((len = recv(sockfd, buf, BUFSIZE, 0)) <= 0) {
-        exit();
-        return;
-      }
-
-      buffer.append(buf, len);
-    }
-
-    if (pfd.revents & POLLHUP) {
+    if ((len = recv(sockfd, buf, BUFSIZE, MSG_DONTWAIT)) <= 0) {
       exit();
       return;
     }
+
+    buffer.append(buf, len);
   }
 }
