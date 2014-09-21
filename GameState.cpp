@@ -112,6 +112,7 @@ void GameState::removePlayer(int id) {
     if (grid[x][y] == player)
       grid[x][y] = NULL;
 
+    players.erase(player->id());
     delete player;
   }
 }

@@ -56,9 +56,9 @@ void ClientThread::init(const char* host, const char* port) {
 
 void ClientThread::exit() {
   if (running) {
+    running = false;
     const char msg[] = "exit";
     const int len = sizeof(msg);
-    running = false;
     send(sockfd, msg, len, 0);
     close(sockfd);
   }

@@ -109,25 +109,27 @@ void ServerThread::loop() {
   int len;
 
   while (running) {
-    int ret = poll(fds.data(), fds.size(), -1);    
-
-    if (ret > 0) {
+    if (poll(fds.data(), fds.size(), 100) > 0) {
       for (uint32_t i = 0; i < fds.size(); ++i) {
         PlayerManager *pm = pms[fds[i].fd];
         if (pm) {
-          if (fds[i].revents & POLLIN) {
-            if ((len = recv(fds[i].fd, buf, BUFSIZE, 0)) == -1) {
-              ServerThread::running = false;
-              return;
-            }
-
-            std::string msg;
-            msg.append(buf, len);
-            pm->addMessage(msg);
+          if ((len = recv(fds[i].fd, buf, BUFSIZE, MSG_DONTWAIT)) == -1) {
+            running = false;
+            return;
           }
 
-          if (fds[i].revents & POLLHUP)
+          if (len == 0) {
             delete pm;
+            pms.erase(fds[i].fd);
+            if (pms.size() == 0) {
+              running = false;
+              return;
+            }
+          }
+
+          std::string msg;
+          msg.append(buf, len);
+          pm->addMessage(msg);
         }
       }
     }
