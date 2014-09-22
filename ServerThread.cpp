@@ -114,8 +114,10 @@ void ServerThread::loop() {
         if (!fds[i].revents)
           continue;
 
-        PlayerManager *pm = pms[fds[i].fd];
-        if (pm) {
+        auto it = pms.find(fds[i].fd);
+
+        if (it != pms.end()) {
+          PlayerManager* pm = it->second;
           if ((len = recv(fds[i].fd, buf, BUFSIZE, MSG_DONTWAIT)) == -1) {
             running = false;
             return;
