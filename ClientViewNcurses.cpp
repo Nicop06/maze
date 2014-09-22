@@ -9,7 +9,7 @@ ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread)
   : ClientView(clientThread), N(0), win(NULL), running(false) {
   std::cout << "Waiting for game to start..." << std::endl;
 }
- 
+
 ClientViewNcurses::~ClientViewNcurses() {
   if (running) {
     running = false;

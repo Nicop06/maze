@@ -11,7 +11,7 @@ class ClientViewNcurses : public ClientView {
   public:
     ClientViewNcurses(ClientThread& clientThread);
     ~ClientViewNcurses();
-    
+
     void init(int id, int N);
 
     // Update the view

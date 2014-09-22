@@ -22,7 +22,7 @@ class ServerThread {
   private:
     int sockfd;
     std::vector<struct pollfd> fds;
-    
+
     GameState gameState;
     std::map<int, PlayerManager*> pms;
 
