@@ -114,6 +114,7 @@ void GameState::removePlayer(int id) {
 
     players.erase(player->id());
     delete player;
+    --P;
   }
 }
 
