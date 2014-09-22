@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <algorithm>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -82,7 +83,7 @@ void ServerThread::acceptClients() {
       pfd.fd = accept(sockfd, NULL, NULL);
       if (pfd.fd < 0)
         throw std::string("accept");
-      pfd.events = POLLIN | POLLHUP;
+      pfd.events = POLLIN;
       fds.push_back(pfd);
 
       PlayerManager *pm = new PlayerManager(pfd.fd, gameState);
@@ -137,6 +138,8 @@ void ServerThread::loop() {
           pm->addMessage(msg);
         }
       }
+
+      fds.erase(std::remove_if(fds.begin(), fds.end(), [=](struct pollfd pfd){ return pms.find(pfd.fd) == pms.end(); }), fds.end());
     }
   }
 }
