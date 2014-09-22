@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <sstream>
 #include <arpa/inet.h>
 
 ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread)
@@ -127,14 +126,12 @@ int ClientViewNcurses::update(const std::string& state) {
     if (best_id == id) {
       msg = "You won";
     } else {
-      std::ostringstream convert;
-      convert << "Player " << best_id << " won";
-      msg = convert.str();
+      msg = "Player " + std::to_string(best_id) + " won";
     }
 
     wclear(win);
     box(win, 0, 0);
-    mvwprintw(win, maxy / 2, std::max(1, (int)((maxx - msg.length()) / 2)), "%s", msg.data());
+    mvwprintw(win, (maxy - 1) / 2, std::max(1, (int)((maxx - msg.length()) / 2)), "%s", msg.data());
   }
 
   refresh();
