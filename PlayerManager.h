@@ -17,8 +17,11 @@ class PlayerManager
     ~PlayerManager();
 
     void init(int playerId);
+    void start();
     void stop();
     void addMessage(const std::string& msg);
+    void waitForJoin();
+    void sendBackupIp();
   private:
     int sockfd;
     GameState& gameState;
@@ -33,6 +36,7 @@ class PlayerManager
     std::atomic<bool> running;
 
     void processMessage();
+    
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <algorithm>
 #include <iostream>
+#include "config.h"
 
 PlayerManager::PlayerManager(int sockfd, GameState& gameState)
   : sockfd(sockfd), gameState(gameState), nb_msg(0) {
@@ -24,10 +25,14 @@ void PlayerManager::init(int playerId) {
   if (player) {
     running = true;
     std::cout << "Connection with client " << player->id() << std::endl;
-    msg_thread = std::thread(&PlayerManager::processMessage, this);
   } else {
     throw std::string("Cannot create player");
   }
+}
+
+void PlayerManager::start(){
+  if(running)
+    msg_thread = std::thread(&PlayerManager::processMessage, this);
 }
 
 void PlayerManager::stop() {
@@ -50,6 +55,42 @@ void PlayerManager::addMessage(const std::string& msg) {
     nb_msg += nb_new;
 
   cv.notify_one();
+}
+
+void PlayerManager::waitForJoin() {
+  size_t pos;
+  std::string cmd, msg;
+
+  if (!running)
+    return;
+
+  std::unique_lock<std::mutex> lck(msg_mx);
+  while (nb_msg <= 0 && running) cv.wait(lck);
+  pos = buffer.find('\0',0);
+  cmd = buffer.substr(0,pos);
+  buffer = buffer.substr(pos+1);
+  lck.unlock();
+  
+  nb_msg--;
+
+  if (cmd == "join") {
+    int id = htonl(player->id());
+    int N = htonl(gameState.getSize());
+    msg.append((char*) &id, 4);
+    msg.append((char*) &N, 4);
+  }else{
+     std::cerr << "Client " << player->id() << " did not join" << std::endl;
+     stop();
+     return;
+  }
+  msg += gameState.getState();
+  
+  if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
+    std::cerr << "Error while sending the state to client " << player->id() << std::endl;
+    stop();
+    return;
+  }
+  std::cerr << "Client " << player->id() << " joined" << std::endl;
 }
 
 void PlayerManager::processMessage() {
@@ -75,13 +116,6 @@ void PlayerManager::processMessage() {
         stop();
         gameState.removePlayer(player->id());
         return;
-      }
-
-      if (cmd == "join") {
-        int id = htonl(player->id());
-        int N = htonl(gameState.getSize());
-        msg.append((char*) &id, 4);
-        msg.append((char*) &N, 4);
       }
 
       if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W")

@@ -11,6 +11,7 @@
 
 #include "ServerThread.h"
 #include "PlayerManager.h"
+#include "config.h"
 
 bool ServerThread::running = false;
 
@@ -101,7 +102,23 @@ void ServerThread::acceptClients() {
   }
 
   close(sockfd);
+  std::thread(&ServerThread::waitClientsJoin, this).detach();
+}
+
+void ServerThread::waitClientsJoin(){
+  std::cout << "Clients are joining..." << std::endl;
+  
+  //wait for all clients to join
+  for(auto it = pms.begin(); it!=pms.end(); ++it){
+    std::thread(&PlayerManager::waitForJoin, it->second).join();
+  }
+
+  //choose backup
+
   std::cout << "Game starting..." << std::endl;
+  for(auto it = pms.begin(); it!=pms.end(); ++it){
+    it->second->start();
+  }
 }
 
 void ServerThread::loop() {
@@ -141,4 +158,20 @@ void ServerThread::loop() {
       fds.erase(std::remove_if(fds.begin(), fds.end(), [=](struct pollfd pfd){ return pms.find(pfd.fd) == pms.end(); }), fds.end());
     }
   }
+}
+
+void ServerThread::chooseBackup(){
+/*  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::minstd_rand generator(seed);
+  std::uniform_int_distribution<int> distribution(0, fds.size()-1);
+  int i = distribution(generator);
+  
+  PlayerManager* pm = pms[fds[i].fd];
+  pm->sendBackup(); //send "backup" message to the chosen backup server
+  for(int j=0; j<fds.size(); j++){
+    if(j!=i)
+      pms[fds[i].fd]->sendBackupIP();//send IP and port to other clients
+  }
+  //envoyer message "backupIp" aux autres clients
+*/
 }

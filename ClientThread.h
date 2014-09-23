@@ -23,6 +23,7 @@ class ClientThread {
     ClientView* view;
 
     int sockfd;
+    int otherSockfd; //socket to the backup server
     struct pollfd pfd;
 
     std::string buffer;

@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
         ct.init("localhost",argv[4]);
       }
       clientLoop = std::thread(&ClientThread::loop, &ct);
-      acceptClient.join();
+      acceptClient.join();//clients are now all accepted by the server
 
       serverLoop = std::thread(&ServerThread::loop, &st);
       clientLoop.join();

@@ -21,11 +21,15 @@ class ServerThread {
 
   private:
     int sockfd;
+    int otherSockfd; //socket to the other server
     std::vector<struct pollfd> fds;
 
     GameState gameState;
     std::map<int, PlayerManager*> pms; //sockfd to playerManager
     static bool running;
+
+    void waitClientsJoin();
+    void chooseBackup();
 };
 
 #endif

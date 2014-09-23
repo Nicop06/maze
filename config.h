@@ -8,4 +8,9 @@
 #define MAXSIZE 100
 #define BUFSIZE 1024
 
+#define INIT "it"
+#define STATE "st"
+#define BACKUP "bp"
+#define BACKUP_IP "ip"
+
 #endif

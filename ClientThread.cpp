@@ -9,6 +9,7 @@
 
 #include "ClientThread.h"
 #include "ClientViewNcurses.h"
+#include "config.h"
 
 ClientThread::ClientThread() {
   view = new ClientViewNcurses(*this);
@@ -131,7 +132,6 @@ void ClientThread::read() {
       exit();
       return;
     }
-
     buffer.append(buf, len);
   }
 }
