@@ -21,12 +21,13 @@ int main(int argc, char* argv[]) {
         acceptClient = std::thread(&ServerThread::acceptClients, &st);
         ct.init("localhost",argv[4]);
       } else{
-        st.init(argv[4]);//st.init(argv[4],argv[5]);
+        st.init(argv[4]);//st.init(argv[4],argv[5]); when everything fixed
         acceptClient = std::thread(&ServerThread::acceptClients, &st);
         ct.init("localhost",argv[4]);
       }
       clientLoop = std::thread(&ClientThread::loop, &ct);
       acceptClient.join();
+
       serverLoop = std::thread(&ServerThread::loop, &st);
       clientLoop.join();
       serverLoop.join();

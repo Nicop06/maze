@@ -16,10 +16,9 @@ class PlayerManager
     PlayerManager(int sockfd, GameState& gameState);
     ~PlayerManager();
 
-    void init();
+    void init(int playerId);
     void stop();
     void addMessage(const std::string& msg);
-
   private:
     int sockfd;
     GameState& gameState;

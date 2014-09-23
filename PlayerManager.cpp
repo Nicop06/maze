@@ -18,8 +18,8 @@ PlayerManager::~PlayerManager() {
   close(sockfd);
 }
 
-void PlayerManager::init() {
-  player = gameState.addPlayer(sockfd);
+void PlayerManager::init(int playerId) {
+  player = gameState.addPlayer(playerId);
 
   if (player) {
     running = true;

@@ -24,8 +24,7 @@ class ServerThread {
     std::vector<struct pollfd> fds;
 
     GameState gameState;
-    std::map<int, PlayerManager*> pms;
-
+    std::map<int, PlayerManager*> pms; //sockfd to playerManager
     static bool running;
 };
 
