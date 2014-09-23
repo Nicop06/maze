@@ -2,18 +2,21 @@ CXX=g++
 DEBUG=-g3
 CXXFLAGS+=${DEBUG} -O3 -Wall -Wextra -c -std=gnu++11 -pthread
 LDFLAGS+=-std=gnu++11 -pthread -lncurses
-EXEC=maze_server maze_client
+EXEC=mergedMain
 SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)
 INC=$(wildcard *.h)
 
-SERVER_SRC=mainServer.cpp ServerThread.cpp GameState.cpp Player.cpp Cell.cpp PlayerManager.cpp
+SERVER_SRC=ServerThread.cpp GameState.cpp Player.cpp Cell.cpp PlayerManager.cpp
 SERVER_OBJ=$(SERVER_SRC:.cpp=.o)
 
-CLIENT_SRC=mainClient.cpp ClientThread.cpp ClientViewNcurses.cpp
+CLIENT_SRC=ClientThread.cpp ClientViewNcurses.cpp
 CLIENT_OBJ=$(CLIENT_SRC:.cpp=.o)
 
 all: $(EXEC)
+
+mergedMain : mergedMain.o $(SERVER_OBJ) $(CLIENT_OBJ)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 maze_server: $(SERVER_OBJ)
 	$(CXX) -o $@ $^ $(LDFLAGS)
@@ -29,9 +32,7 @@ GameState.o: GameState.h Cell.h Player.h Treasure.h
 Player.o: GameState.h Cell.h Player.h Treasure.h
 Cell.o: Cell.h
 ServerThread.o: ServerThread.h config.h
-mainServer.o: ServerThread.h
 ClientThread.o: ClientThread.h config.h
-mainClient.o: ClientThread.h ClientView.h
 PlayerManager.o: PlayerManager.h
 ClientViewNcurses.o: ClientViewNcurses.h ClientView.h ClientThread.h
 

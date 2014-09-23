@@ -1,5 +1,4 @@
 *.o
 *~
-maze_server
-maze_client
+mergedMain
 
