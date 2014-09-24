@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
         acceptClient = std::thread(&ServerThread::acceptClients, &st);
         ct.init("localhost",argv[4]);
       } else{
-        st.init(argv[4]);//st.init(argv[4],argv[5]); when everything fixed
+        st.init(argv[4],argv[5]);
         acceptClient = std::thread(&ServerThread::acceptClients, &st);
         ct.init("localhost",argv[4]);
       }
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     } catch(std::string const& e) {
       std::cerr << "Error : " << e << std::endl;
     }
-  }else if(argc>=1 && argc <=2){
+  }else if(argc>=2 && argc <=3){
     //this is a single client
     ClientThread ct;
     try {

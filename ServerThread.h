@@ -4,7 +4,6 @@
 #include "GameState.h"
 #include "PlayerManager.h"
 #include "config.h"
-
 #include <vector>
 #include <map>
 #include <poll.h>
@@ -14,7 +13,7 @@ class ServerThread {
     ServerThread(int N, int M);
     ~ServerThread();
 
-    void init(const char* port = PORT);
+    void init(const char* port = PORT, const char* servPort = SERV_PORT);
     void acceptClients();
     void loop();
     void exit();
@@ -22,6 +21,8 @@ class ServerThread {
   private:
     int sockfd;
     int otherSockfd; //socket to the other server
+    std::string port;
+    std::string servPort;
     std::vector<struct pollfd> fds;
 
     GameState gameState;

@@ -15,7 +15,7 @@
 
 bool ServerThread::running = false;
 
-ServerThread::ServerThread(int N, int M) : gameState(N, M) {
+ServerThread::ServerThread(int N, int M) : gameState(N, M){
 }
 
 ServerThread::~ServerThread() {
@@ -27,7 +27,10 @@ ServerThread::~ServerThread() {
   }
 }
 
-void ServerThread::init(const char* port) {
+void ServerThread::init(const char* p, const char* servP) {
+  port = p;
+  servPort = servP;
+
   struct addrinfo hints;
   struct addrinfo *result, *rp;
 
@@ -36,7 +39,7 @@ void ServerThread::init(const char* port) {
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
-  int s = getaddrinfo(NULL, port, &hints, &result);
+  int s = getaddrinfo(NULL, port.c_str(), &hints, &result);
   if (s != 0)
     throw std::string("getaddrinfo: ", gai_strerror(s));
 
@@ -165,11 +168,9 @@ void ServerThread::chooseBackup(){
   std::minstd_rand generator(seed);
   std::uniform_int_distribution<unsigned int> distribution(0, fds.size()-1);
   std::string ip;
-  std::string clientPort = PORT;
-  std::string servPort = SERV_PORT;//port d'échange entre les 2 serveurs
   unsigned int i = distribution(generator);
   PlayerManager* pm = pms[fds[i].fd];
-
+  //Problème : comment le serveur sait quel client a été démarré en même temps que lui ? -> serverThread doit contenir le client ?
   while(!pm->sendBackup(servPort)){
     i = distribution(generator);
     pm = pms[fds[i].fd];
@@ -179,7 +180,7 @@ void ServerThread::chooseBackup(){
   ip = pm->getIpAddr();
   for(unsigned int j=0; j<fds.size(); j++){
     if(j!=i){
-      pms[fds[j].fd]->sendBackupIp(ip, clientPort);
+      pms[fds[j].fd]->sendBackupIp(ip, port);
     }
   }
 }

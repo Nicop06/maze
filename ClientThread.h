@@ -25,7 +25,7 @@ class ClientThread {
     int sockfd;
     int otherSockfd; //socket to the backup server
     struct pollfd pfd;
-
+    
     std::string buffer;
     char buf[BUFSIZE];
 
