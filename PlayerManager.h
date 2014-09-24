@@ -21,7 +21,9 @@ class PlayerManager
     void stop();
     void addMessage(const std::string& msg);
     void waitForJoin();
-    void sendBackupIp();
+    void sendBackupIp(std::string ip, std::string port);
+    bool sendBackup(std::string port);
+    std::string getIpAddr();
   private:
     int sockfd;
     GameState& gameState;

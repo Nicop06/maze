@@ -53,6 +53,7 @@ void ClientThread::init(const char* host, const char* port) {
   pfd.events = POLLIN | POLLHUP;
 
   running = true;
+  
 }
 
 void ClientThread::exit() {
@@ -89,8 +90,9 @@ void ClientThread::move(char dir) {
 }
 
 void ClientThread::loop() {
-  int len;
-
+  //séparer en init() et loop()
+  int len, head, id, N;
+  int* data;
   if (!running)
     return;
 
@@ -98,27 +100,56 @@ void ClientThread::loop() {
     exit();
 
   // Wait for player id and game size
-  while (running && buffer.length() < 8)
+  while (running && buffer.length() < 3*sizeof(int))
     read();
 
   if (running) {
-    int* data = (int*) buffer.data();
-    int id = ntohl(*data);
-    int N = ntohl(*(data+1));
-    buffer.erase(0, 8);
+    data = (int*) buffer.data();
+    head = ntohl(*data);
+    id = ntohl(*(data+1));
+    N = ntohl(*(data+2));
+    buffer.erase(0, 3*sizeof(int));
 
-    if (N > MAXSIZE) {
+    if (N > MAXSIZE || head!=INIT) {
       exit();
       return;
     }
+    
+    while (running && buffer.length() < sizeof(int))
+      read();
 
+    data = (int*) buffer.data();
+    head = ntohl(*data);
+    if(head==BACKUP){
+      //initialize backup server and retrieve the port for connexion with the server
+      //connect to server
+      //wait for other clients to connect to the created backup server
+      int portSize = ntohl(*(data+1));
+      std::string port = buffer.substr(2*sizeof(int), portSize);
+      std::cout << "I am the backup server, port to server: " << port << std::endl;
+      buffer.erase(0, 2*sizeof(int)+portSize);
+    }else if(head==BACK_IP){
+      //connect with backup server
+      int ipSize = ntohl(*(data+1));
+      int portSize = ntohl(*(data+2));
+      std::string ip = buffer.substr(3*sizeof(int), ipSize);
+      std::string port = buffer.substr(3*sizeof(int)+ipSize, portSize);
+      buffer.erase(0, 3*sizeof(int)+ipSize+portSize);
+      std::cout << "I am not the backup server, id: " << id << ", backup server ip: " << ip << ", port: " << port << std::endl;
+    }else{
+      std::cout << "Hum, embarassing, id: " << id << std::endl;
+      buffer.erase(0, sizeof(int));
+      exit();
+      return;
+    }
+    
     view->init(id, N);
   }
 
   // Wait for new messages
   while (running) {
     read();
-
+    buffer.erase(0,sizeof(int));//remove head
     while ((len = view->update(buffer)) > 0)
       buffer.erase(0, len);
   }

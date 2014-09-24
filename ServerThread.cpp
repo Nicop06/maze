@@ -15,7 +15,7 @@
 
 bool ServerThread::running = false;
 
-ServerThread::ServerThread(int N, int M) : gameState(N, M)  {
+ServerThread::ServerThread(int N, int M) : gameState(N, M) {
 }
 
 ServerThread::~ServerThread() {
@@ -113,7 +113,7 @@ void ServerThread::waitClientsJoin(){
     std::thread(&PlayerManager::waitForJoin, it->second).join();
   }
 
-  //choose backup
+  chooseBackup();
 
   std::cout << "Game starting..." << std::endl;
   for(auto it = pms.begin(); it!=pms.end(); ++it){
@@ -161,17 +161,25 @@ void ServerThread::loop() {
 }
 
 void ServerThread::chooseBackup(){
-/*  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::minstd_rand generator(seed);
-  std::uniform_int_distribution<int> distribution(0, fds.size()-1);
-  int i = distribution(generator);
-  
+  std::uniform_int_distribution<unsigned int> distribution(0, fds.size()-1);
+  std::string ip;
+  std::string clientPort = PORT;
+  std::string servPort = SERV_PORT;//port d'échange entre les 2 serveurs
+  unsigned int i = distribution(generator);
   PlayerManager* pm = pms[fds[i].fd];
-  pm->sendBackup(); //send "backup" message to the chosen backup server
-  for(int j=0; j<fds.size(); j++){
-    if(j!=i)
-      pms[fds[i].fd]->sendBackupIP();//send IP and port to other clients
+
+  while(!pm->sendBackup(servPort)){
+    i = distribution(generator);
+    pm = pms[fds[i].fd];
   }
-  //envoyer message "backupIp" aux autres clients
-*/
+  //attendre la connexion du backup sur le bon port puis:
+  //waitForBackup() (attend la connexion du backup puis envoie gamestate)
+  ip = pm->getIpAddr();
+  for(unsigned int j=0; j<fds.size(); j++){
+    if(j!=i){
+      pms[fds[j].fd]->sendBackupIp(ip, clientPort);
+    }
+  }
 }
