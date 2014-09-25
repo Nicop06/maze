@@ -24,6 +24,7 @@ class PlayerManager
     void sendBackupIp(std::string ip, std::string port);
     bool sendBackup(std::string port);
     std::string getIpAddr();
+    int getPlayerId() const;
   private:
     int sockfd;
     GameState& gameState;

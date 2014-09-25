@@ -8,29 +8,15 @@
 int main(int argc, char* argv[]) {
   if(std::string("-s").compare(argv[1])==0 && argc>=4 && argc<=6){
     //this is the main server, we have to launch server and client
-    ServerThread st(std::stoi(argv[2]), std::stoi(argv[3]));
     ClientThread ct;
-    std::thread acceptClient, clientLoop, serverLoop;
     try {
       if (argc == 4) {
-        st.init();
-        acceptClient = std::thread(&ServerThread::acceptClients, &st);
-        ct.init("localhost");
+        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]));
       } else if (argc == 5) {
-        st.init(argv[4]);
-        acceptClient = std::thread(&ServerThread::acceptClients, &st);
-        ct.init("localhost",argv[4]);
+        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]),argv[4]);
       } else{
-        st.init(argv[4],argv[5]);
-        acceptClient = std::thread(&ServerThread::acceptClients, &st);
-        ct.init("localhost",argv[4]);
+        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]),argv[4], argv[5]);
       }
-      clientLoop = std::thread(&ClientThread::loop, &ct);
-      acceptClient.join();//clients are now all accepted by the server
-
-      serverLoop = std::thread(&ServerThread::loop, &st);
-      clientLoop.join();
-      serverLoop.join();
     } catch(std::string const& e) {
       std::cerr << "Error : " << e << std::endl;
     }
@@ -39,14 +25,13 @@ int main(int argc, char* argv[]) {
     ClientThread ct;
     try {
       if (argc == 2) {
-        ct.init(argv[1]);
+        ct.initClient(argv[1]);
       } else if (argc == 3) {
-        ct.init(argv[1], argv[2]);
+        ct.initClient(argv[1], argv[2]);
       }
     } catch(std::string const& e){
       std::cerr << "Error : " << e << std::endl;
     }
-    ct.loop();
   }else{
     std::cout << "Usage: " << argv[0] << "-s N M [PORT] [SERV_PORT] or HOST [PORT]" << std::endl;
     std::cout << "  N: grid size." << std::endl;

@@ -9,19 +9,24 @@
 #include <thread>
 #include <atomic>
 
+class ServerThread;
+
 class ClientThread {
   public:
     ClientThread();
     ~ClientThread();
-
-    void init(const char* host, const char* port = PORT);
+    void initClientServer(int N, int M, const char* port = PORT, const char* servPort = SERV_PORT);
+    void initClient(const char* host, const char* port = PORT);
     void exit();
-    void loop();
     void move(char dir);
+    int getId() const;
 
   private:
     ClientView* view;
-
+    ServerThread* st;
+    int id;
+    std::string mPort;
+    std::string mHost;
     int sockfd;
     int otherSockfd; //socket to the backup server
     struct pollfd pfd;
@@ -31,6 +36,8 @@ class ClientThread {
 
     std::atomic<bool> running;
 
+    void init(const char* host, const char* port = PORT);
+    void loop();
     void read();
 };
 

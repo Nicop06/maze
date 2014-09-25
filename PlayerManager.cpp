@@ -203,3 +203,7 @@ std::string PlayerManager::getIpAddr(){
   }
   return std::string(ipstr);
 }
+
+int PlayerManager::getPlayerId() const{
+  return player->id();
+}

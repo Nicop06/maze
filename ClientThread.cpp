@@ -6,13 +6,16 @@
 
 #include <string>
 #include <iostream>
+#include <thread>
 
 #include "ClientThread.h"
+#include "ServerThread.h"
 #include "ClientViewNcurses.h"
 #include "config.h"
 
-ClientThread::ClientThread() {
+ClientThread::ClientThread(): id(-1) {
   view = new ClientViewNcurses(*this);
+  st = NULL;
 }
 
 ClientThread::~ClientThread() {
@@ -20,7 +23,36 @@ ClientThread::~ClientThread() {
   delete view;
 }
 
+int ClientThread::getId() const{
+  return id;
+}
+
+void ClientThread::initClientServer(int N, int M, const char* port, const char* servPort){
+  mPort = port;
+  mHost = "localhost";
+  
+  st = new ServerThread(N,M, this);
+  std::thread acceptClient, clientLoop, serverLoop;
+
+  st->init(port,servPort);
+  acceptClient = std::thread(&ServerThread::acceptClients, st);
+  init("localhost",port);
+
+  clientLoop = std::thread(&ClientThread::loop, this);
+  acceptClient.join();//clients are now all accepted by the server
+  serverLoop = std::thread(&ServerThread::loop, st);
+  clientLoop.join();
+  serverLoop.join();
+}
+
+void ClientThread::initClient(const char* host, const char* port){
+  init(host, port);
+  loop();
+}
+
 void ClientThread::init(const char* host, const char* port) {
+  mPort = port;
+  mHost = host;
   struct addrinfo hints, *result, *rp;
 
   memset(&hints, 0, sizeof(struct addrinfo));
@@ -90,8 +122,7 @@ void ClientThread::move(char dir) {
 }
 
 void ClientThread::loop() {
-  //séparer en init() et loop()
-  int len, head, id, N;
+  int len, head, N;
   int* data;
   if (!running)
     return;
@@ -125,9 +156,10 @@ void ClientThread::loop() {
       //connect to server
       //wait for other clients to connect to the created backup server
       int portSize = ntohl(*(data+1));
-      std::string port = buffer.substr(2*sizeof(int), portSize);
-      std::cout << "I am the backup server, port to server: " << port << std::endl;
+      std::string servPort = buffer.substr(2*sizeof(int), portSize);
       buffer.erase(0, 2*sizeof(int)+portSize);
+      std::cout << "I am the backup server, port to server: " << servPort << std::endl;
+      
     }else if(head==BACK_IP){
       //connect with backup server
       int ipSize = ntohl(*(data+1));

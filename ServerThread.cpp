@@ -11,11 +11,12 @@
 
 #include "ServerThread.h"
 #include "PlayerManager.h"
+#include "ClientThread.h"
 #include "config.h"
 
 bool ServerThread::running = false;
 
-ServerThread::ServerThread(int N, int M) : gameState(N, M){
+ServerThread::ServerThread(int N, int M, ClientThread* client) : gameState(N, M), ct(client){
 }
 
 ServerThread::~ServerThread() {
@@ -115,7 +116,9 @@ void ServerThread::waitClientsJoin(){
   for(auto it = pms.begin(); it!=pms.end(); ++it){
     std::thread(&PlayerManager::waitForJoin, it->second).join();
   }
-
+  
+  clientId = ct->getId();
+  std::cout << "Local client is " << clientId << std::endl;
   chooseBackup();
 
   std::cout << "Game starting..." << std::endl;
@@ -170,17 +173,21 @@ void ServerThread::chooseBackup(){
   std::string ip;
   unsigned int i = distribution(generator);
   PlayerManager* pm = pms[fds[i].fd];
-  //Problème : comment le serveur sait quel client a été démarré en même temps que lui ? -> serverThread doit contenir le client ?
-  while(!pm->sendBackup(servPort)){
-    i = distribution(generator);
-    pm = pms[fds[i].fd];
-  }
-  //attendre la connexion du backup sur le bon port puis:
-  //waitForBackup() (attend la connexion du backup puis envoie gamestate)
-  ip = pm->getIpAddr();
-  for(unsigned int j=0; j<fds.size(); j++){
-    if(j!=i){
-      pms[fds[j].fd]->sendBackupIp(ip, port);
+  if(fds.size()>1){
+    while(pm->getPlayerId()!= clientId && !pm->sendBackup(servPort)){
+      i = distribution(generator);
+      pm = pms[fds[i].fd];
     }
+    ip = pm->getIpAddr();
+    for(unsigned int j=0; j<fds.size(); j++){
+      if(j!=i){
+        pms[fds[j].fd]->sendBackupIp(ip, port);
+      }
+    }
+  }else{
+    //To be modified
+    running = false;
+    std::cerr << "Only one player!" << std::endl;
+    return;
   }
 }

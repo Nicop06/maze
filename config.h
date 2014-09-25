@@ -7,6 +7,7 @@
 #define SERV_PORT "3491"
 #define BACKLOG 10
 #define TIMEOUT 20
+#define BACKUP_TIMEOUT 5
 
 #define MAXSIZE 100
 #define BUFSIZE 1024
