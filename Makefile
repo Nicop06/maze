@@ -2,32 +2,21 @@ CXX=g++
 DEBUG=-g3
 CXXFLAGS+=${DEBUG} -O3 -Wall -Wextra -c -std=gnu++11 -pthread
 LDFLAGS+=-std=gnu++11 -pthread -lncurses
-EXEC=mergedMain
+EXEC=maze
 SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)
 INC=$(wildcard *.h)
 
-SERVER_SRC=ServerThread.cpp GameState.cpp Player.cpp Cell.cpp PlayerManager.cpp
-SERVER_OBJ=$(SERVER_SRC:.cpp=.o)
-
-CLIENT_SRC=ClientThread.cpp ClientViewNcurses.cpp
-CLIENT_OBJ=$(CLIENT_SRC:.cpp=.o)
-
 all: $(EXEC)
 
-mergedMain : mergedMain.o $(SERVER_OBJ) $(CLIENT_OBJ)
-	$(CXX) -o $@ $^ $(LDFLAGS)
-
-maze_server: $(SERVER_OBJ)
-	$(CXX) -o $@ $^ $(LDFLAGS)
-
-maze_client: $(CLIENT_OBJ)
+maze: $(OBJ)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
 	$(CXX) -o $@ $< $(CXXFLAGS)
 
 # Headers dependencies
+main.o: ServerThread.h ClientThread.h
 GameState.o: GameState.h Cell.h Player.h Treasure.h
 Player.o: GameState.h Cell.h Player.h Treasure.h
 Cell.o: Cell.h

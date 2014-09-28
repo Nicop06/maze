@@ -1,4 +1,3 @@
 *.o
 *~
-mergedMain
-
+maze
