@@ -10,9 +10,7 @@
 #include <cstring>
 
 #include "ServerThread.h"
-#include "PlayerManager.h"
 #include "ClientThread.h"
-#include "config.h"
 
 bool ServerThread::running = false;
 

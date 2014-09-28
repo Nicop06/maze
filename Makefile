@@ -13,22 +13,14 @@ maze: $(OBJ)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
-	$(CXX) -o $@ $< $(CXXFLAGS)
+	$(CXX) -MMD -o $@ $< $(CXXFLAGS)
 
-# Headers dependencies
-main.o: ServerThread.h ClientThread.h
-GameState.o: GameState.h Cell.h Player.h Treasure.h
-Player.o: GameState.h Cell.h Player.h Treasure.h
-Cell.o: Cell.h
-ServerThread.o: ServerThread.h config.h
-ClientThread.o: ClientThread.h config.h
-PlayerManager.o: PlayerManager.h
-ClientViewNcurses.o: ClientViewNcurses.h ClientView.h ClientThread.h
+-include *.d
 
 .PHONY: clean mrproper
 
 clean:
-	rm -rf *.o
+	rm -rf *.o *.d
 
 mrproper: clean
 	rm -rf $(EXEC)

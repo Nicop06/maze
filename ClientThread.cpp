@@ -11,7 +11,6 @@
 #include "ClientThread.h"
 #include "ServerThread.h"
 #include "ClientViewNcurses.h"
-#include "config.h"
 
 ClientThread::ClientThread(): id(-1) {
   view = new ClientViewNcurses(*this);
