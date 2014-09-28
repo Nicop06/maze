@@ -5,24 +5,34 @@
 #include "ServerThread.h"
 #include "ClientThread.h"
 
+void usage() {
+  std::cout << "Usage: maze -s N M [PORT] [SERV_PORT] or HOST [PORT]" << std::endl;
+  std::cout << "  N: grid size." << std::endl;
+  std::cout << "  M: number of treasures." << std::endl;
+  exit(-1);
+}
+
 int main(int argc, char* argv[]) {
-  if(std::string("-s").compare(argv[1])==0 && argc>=4 && argc<=6){
-    //this is the main server, we have to launch server and client
-    ClientThread ct;
+  if (argc < 2)
+    usage();
+
+  ClientThread ct;
+  if(std::string(argv[1]) == "-s") {
     try {
       if (argc == 4) {
         ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]));
       } else if (argc == 5) {
-        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]),argv[4]);
-      } else{
-        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]),argv[4], argv[5]);
+        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]), argv[4]);
+      } else if (argc == 6) {
+        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]), argv[4], argv[5]);
+      } else {
+        usage();
       }
     } catch(std::string const& e) {
       std::cerr << "Error : " << e << std::endl;
+      return -1;
     }
-  }else if(argc>=2 && argc <=3){
-    //this is a single client
-    ClientThread ct;
+  } else if(argc>=2 && argc <=3) {
     try {
       if (argc == 2) {
         ct.initClient(argv[1]);
@@ -31,11 +41,9 @@ int main(int argc, char* argv[]) {
       }
     } catch(std::string const& e){
       std::cerr << "Error : " << e << std::endl;
+      return -1;
     }
-  }else{
-    std::cout << "Usage: " << argv[0] << "-s N M [PORT] [SERV_PORT] or HOST [PORT]" << std::endl;
-    std::cout << "  N: grid size." << std::endl;
-    std::cout << "  M: number of treasures." << std::endl;
   }
+
   return 0;
 }
