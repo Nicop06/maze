@@ -17,4 +17,7 @@
 #define BACKUP INT_MAX-3
 #define BACK_IP INT_MAX-4
 
+const int head_init = htonl((uint32_t)-1);
+const int head_state = htonl((uint32_t)-2);
+
 #endif

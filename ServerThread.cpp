@@ -106,25 +106,8 @@ void ServerThread::acceptClients() {
   }
 
   close(sockfd);
-  std::thread(&ServerThread::waitClientsJoin, this).detach();
-}
-
-void ServerThread::waitClientsJoin(){
-  std::cout << "Clients are joining..." << std::endl;
-  
-  //wait for all clients to join
-  for(auto it = pms.begin(); it!=pms.end(); ++it){
-    std::thread(&PlayerManager::waitForJoin, it->second).join();
-  }
-  
-  clientId = ct->getId();
-  std::cout << "Local client is " << clientId << std::endl;
   chooseBackup();
-
   std::cout << "Game starting..." << std::endl;
-  for(auto it = pms.begin(); it!=pms.end(); ++it){
-    it->second->start();
-  }
 }
 
 void ServerThread::loop() {

@@ -25,14 +25,10 @@ void PlayerManager::init(int playerId) {
   if (player) {
     running = true;
     std::cout << "Connection with client " << player->id() << std::endl;
+    msg_thread = std::thread(&PlayerManager::processMessage, this);
   } else {
     throw std::string("Cannot create player");
   }
-}
-
-void PlayerManager::start(){
-  if(running)
-    msg_thread = std::thread(&PlayerManager::processMessage, this);
 }
 
 void PlayerManager::stop() {
@@ -57,56 +53,11 @@ void PlayerManager::addMessage(const std::string& msg) {
   cv.notify_one();
 }
 
-void PlayerManager::waitForJoin() {
-  size_t pos;
-  std::string cmd, msg;
-  int head_init = htonl(INIT);
-
-  if (!running)
-    return;
-
-  std::unique_lock<std::mutex> lck(msg_mx);
-  while (nb_msg <= 0 && running) cv.wait(lck);
-  pos = buffer.find('\0',0);
-  cmd = buffer.substr(0,pos);
-  buffer = buffer.substr(pos+1);
-  lck.unlock();
-  
-  nb_msg--;
-
-  if (cmd == "join") {
-    int id = htonl(player->id());
-    int N = htonl(gameState.getSize());
-    msg.append((char*) &head_init, sizeof(int));
-    msg.append((char*) &id, sizeof(int));
-    msg.append((char*) &N, sizeof(int));
-  }else{
-     std::cerr << "Client " << player->id() << " did not join" << std::endl;
-     stop();
-     return;
-  }
-  
-  if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
-    std::cerr << "Error while sending N and id to client " << player->id() << std::endl;
-    stop();
-    return;
-  }
-  std::cerr << "Client " << player->id() << " joined" << std::endl;
-}
-
 void PlayerManager::processMessage() {
   size_t pos, old_pos;
   std::string tmp, cmd, msg;
-  int head_state = htonl(STATE);
+  uint32_t *head;
   
-  msg.append((char*) &head_state, sizeof(int));
-  msg += gameState.getState();
-  if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
-    std::cerr << "Error while sending the state for the first time to client " << player->id() << std::endl;
-    stop();
-    return;
-  }
-
   while (running) {
     msg.clear();
     std::unique_lock<std::mutex> lck(msg_mx);
@@ -129,8 +80,16 @@ void PlayerManager::processMessage() {
         return;
       }
 
+      if (cmd == "join") {
+        int id = htonl(player->id());
+        int N = htonl(gameState.getSize());
+        msg.append((char*) &head_init, sizeof(int));
+        msg.append((char*) &id, 4);
+        msg.append((char*) &N, 4);
+      }
+
       if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W")
-          player->move(cmd[0]);
+        player->move(cmd[0]);
 
       msg.append((char*) &head_state, sizeof(int));
       msg += gameState.getState();

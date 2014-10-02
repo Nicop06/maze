@@ -25,8 +25,6 @@ class ClientThread {
     ClientView* view;
     ServerThread* st;
     int id;
-    std::string mPort;
-    std::string mHost;
     int sockfd;
     int otherSockfd; //socket to the backup server
     struct pollfd pfd;

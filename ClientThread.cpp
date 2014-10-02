@@ -27,9 +27,6 @@ int ClientThread::getId() const{
 }
 
 void ClientThread::initClientServer(int N, int M, const char* port, const char* servPort){
-  mPort = port;
-  mHost = "localhost";
-  
   st = new ServerThread(N,M, this);
   std::thread acceptClient, clientLoop, serverLoop;
 
@@ -50,8 +47,6 @@ void ClientThread::initClient(const char* host, const char* port){
 }
 
 void ClientThread::init(const char* host, const char* port) {
-  mPort = port;
-  mHost = host;
   struct addrinfo hints, *result, *rp;
 
   memset(&hints, 0, sizeof(struct addrinfo));
