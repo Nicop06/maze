@@ -134,7 +134,7 @@ void ClientThread::loop() {
     N = ntohl(*(data+2));
     buffer.erase(0, 3*sizeof(int));
 
-    if (N > MAXSIZE || head!=INIT) {
+    if (N > MAXSIZE || head!=head_init) {
       exit();
       return;
     }
@@ -142,6 +142,7 @@ void ClientThread::loop() {
     while (running && buffer.length() < sizeof(int))
       read();
 
+    /*
     data = (int*) buffer.data();
     head = ntohl(*data);
     if(head==BACKUP){
@@ -167,6 +168,7 @@ void ClientThread::loop() {
       exit();
       return;
     }
+    */
     
     view->init(id, N);
   }

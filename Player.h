@@ -2,14 +2,12 @@
 #define _PLAYER_GUARD
 
 #include "Cell.h"
-#include <ostream>
-
-class GameState;
+#include "GameState.h"
 
 class Player: public Cell {
   public:
     Player(int x, int y, int id, GameState* gameState)
-      : Cell(x, y), mId(id), pGameState(gameState), new_x(-1), new_y(-1) {}
+      : Cell(x, y), mId(id), pGameState(gameState) {}
     ~Player() {}
 
     void incNbTreasures() { T++; }
@@ -18,11 +16,11 @@ class Player: public Cell {
     bool isTreasure() const { return false; }
     bool isPlayer() const { return true; }
 
-    void updatePosition();
-
     void move(char dir);
 
     std::string getState();
+
+    friend void GameState::updatePosition(Player* player, int new_x, int new_y);
 
   private:
     // The id of the player
@@ -33,9 +31,6 @@ class Player: public Cell {
 
     // The number of treasures
     int T;
-
-    // Temporary variables for position update
-    int new_x, new_y;
 };
 
 #endif

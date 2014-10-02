@@ -2,8 +2,6 @@
 #define _TREASURE_GUARD
 
 #include "Cell.h"
-#include <ostream>
-#include <arpa/inet.h>
 
 class Treasure: public Cell {
   public:

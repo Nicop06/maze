@@ -1,15 +1,13 @@
 #ifndef _GAMESTATE_GUARD
 #define _GAMESTATE_GUARD
 
-#include "Cell.h"
-#include "Player.h"
-#include "Treasure.h"
-
 #include <mutex>
 #include <unordered_set>
 #include <map>
-#include <iostream>
-#include <arpa/inet.h>
+
+class Player;
+class Cell;
+class Treasure;
 
 class GameState {
   public:
@@ -18,6 +16,7 @@ class GameState {
 
     void initTreasures();
 
+    Player* getPlayer(int id) const;
     Player* addPlayer(int id);
     void removePlayer(int id);
 

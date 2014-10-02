@@ -7,7 +7,7 @@
 #include "config.h"
 
 PlayerManager::PlayerManager(int sockfd, GameState& gameState)
-  : sockfd(sockfd), gameState(gameState), nb_msg(0) {
+  : sockfd(sockfd), gameState(gameState), player(NULL), nb_msg(0), running(false) {
 }
 
 PlayerManager::~PlayerManager() {
@@ -71,32 +71,44 @@ void PlayerManager::processMessage() {
 
     while ((pos = tmp.find('\0', old_pos)) != std::string::npos) {
       
-      cmd += tmp.substr(old_pos, pos - old_pos);
+      cmd.append(tmp, old_pos, pos - old_pos);
 
       if (cmd == "exit") {
         stop();
-        gameState.removePlayer(player->id());
+        if (player)
+          gameState.removePlayer(player->id());
         return;
       }
 
-      if (cmd == "join") {
-        int id = htonl(player->id());
-        int N = htonl(gameState.getSize());
-        msg.append((char*) &head_init, sizeof(int));
-        msg.append((char*) &id, 4);
-        msg.append((char*) &N, 4);
+      if (!player && cmd.compare(0, 7, "connect") && tmp.length() > old_pos + 12 && tmp[old_pos + 12] == '\0') {
+        int* id = (int*)(tmp.data() + old_pos + 7);
+        player = gameState.getPlayer(ntohl(*id));
+        pos = old_pos + 12;
+        nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
       }
 
-      if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W")
-        player->move(cmd[0]);
+      if (player) {
+        if (cmd == "join") {
+          int id = htonl(player->id());
+          int N = htonl(gameState.getSize());
+          msg.append((char*) &head_init, 4);
+          msg.append((char*) &id, 4);
+          msg.append((char*) &N, 4);
+        }
 
-      msg.append((char*) &head_state, sizeof(int));
-      msg += gameState.getState();
+        if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W" || cmd == "NoMove") {
+          if (cmd != "NoMove")
+            player->move(cmd[0]);
 
-      if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
-        std::cerr << "Error while sending the state to client " << player->id() << std::endl;
-        stop();
-        return;
+          msg.append((char*) &head_state, 4);
+          msg += gameState.getState();
+
+          if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
+            std::cerr << "Error while sending the state to client " << player->id() << std::endl;
+            stop();
+            return;
+          }
+        }
       }
 
       nb_msg--;

@@ -1,4 +1,8 @@
 #include "GameState.h"
+#include "Player.h"
+#include "Cell.h"
+#include "Treasure.h"
+
 #include <arpa/inet.h>
 #include <random>
 #include <chrono>
@@ -8,7 +12,6 @@ GameState::GameState(int N, int M) : N(N), M(M), T(0), P(0), treasures(M) {
   for (int i = 0; i < N; ++i) {
     grid[i] = new Cell*[N];
   }
-
 }
 
 GameState::~GameState() {
@@ -69,13 +72,20 @@ void GameState::updatePosition(Player* player, int new_x, int new_y) {
 
       grid[player->x()][player->y()] = NULL;
       grid[new_x][new_y] = player;
-      player->updatePosition();
+      player->mx = new_x;
+      player->my = new_y;
+      return;
     }
   }
 }
 
 bool GameState::checkBounds(int x, int y) const {
   return x >= 0 && y >= 0 && x < N && y < N;
+}
+
+Player* GameState::getPlayer(int id) const {
+  auto it = players.find(id);
+  return it == players.end() ? NULL : it->second;
 }
 
 Player* GameState::addPlayer(int id) {
