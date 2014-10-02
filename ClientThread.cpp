@@ -79,7 +79,6 @@ void ClientThread::init(const char* host, const char* port) {
   pfd.events = POLLIN | POLLHUP;
 
   running = true;
-  
 }
 
 void ClientThread::exit() {

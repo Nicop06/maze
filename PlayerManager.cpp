@@ -56,7 +56,6 @@ void PlayerManager::addMessage(const std::string& msg) {
 void PlayerManager::processMessage() {
   size_t pos, old_pos;
   std::string tmp, cmd, msg;
-  uint32_t *head;
   
   while (running) {
     msg.clear();

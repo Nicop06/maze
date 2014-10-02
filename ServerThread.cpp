@@ -106,7 +106,7 @@ void ServerThread::acceptClients() {
   }
 
   close(sockfd);
-  chooseBackup();
+  //chooseBackup();
   std::cout << "Game starting..." << std::endl;
 }
 

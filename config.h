@@ -2,6 +2,7 @@
 #define _CONFIG_GUARD
 
 #include <climits>
+#include <arpa/inet.h>
 
 #define PORT "3490"
 #define SERV_PORT "3491"
