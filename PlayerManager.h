@@ -25,6 +25,7 @@ class PlayerManager
     bool sendBackup(std::string port);
     std::string getIpAddr();
     int getPlayerId() const;
+
   private:
     int sockfd;
     GameState& gameState;
@@ -39,7 +40,6 @@ class PlayerManager
     std::atomic<bool> running;
 
     void processMessage();
-    
 };
 
 #endif

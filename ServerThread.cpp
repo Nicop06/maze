@@ -72,6 +72,7 @@ void ServerThread::init(const char* p, const char* servP) {
 void ServerThread::acceptClients() {
   struct pollfd pfd_listen;
   int playerId = 0;
+
   pfd_listen.fd = sockfd;
   pfd_listen.events = POLLIN;
 
@@ -92,6 +93,7 @@ void ServerThread::acceptClients() {
       PlayerManager *pm = new PlayerManager(pfd.fd, gameState);
       pm->init(++playerId);
       pms[pfd.fd] = pm;
+
       if (timeout == -1) {
         timeout = 0;
         begin = std::chrono::steady_clock::now();
@@ -158,6 +160,7 @@ void ServerThread::loop() {
           pm->addMessage(msg);
         }
       }
+
       //remove closed sockets from fds
       fds.erase(std::remove_if(fds.begin(), fds.end(), [=](struct pollfd pfd){ return pms.find(pfd.fd) == pms.end(); }), fds.end());
     }
