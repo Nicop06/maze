@@ -2,6 +2,7 @@
 #define _GAMESTATE_GUARD
 
 #include <mutex>
+#include <condition_variable>
 #include <unordered_set>
 #include <map>
 
@@ -20,8 +21,10 @@ class GameState {
     Player* addPlayer(int id);
     void removePlayer(int id);
 
-    void updatePosition(Player* player, int new_x, int new_y);
+    void updatePosition(Player* player, int new_x, int new_y, bool async);
     inline bool checkBounds(int x, int y) const;
+
+    inline void synchronize();
 
     std::string getState();
     int getSize() const { return N; }
@@ -40,6 +43,10 @@ class GameState {
 
     // The number of player
     int P;
+
+    // This is for async call
+    std::condition_variable cv_sync;
+    std::mutex cv_lock;
 
     // The grid
     Cell*** grid;

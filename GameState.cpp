@@ -2,6 +2,7 @@
 #include "Player.h"
 #include "Cell.h"
 #include "Treasure.h"
+#include "config.h"
 
 #include <arpa/inet.h>
 #include <random>
@@ -34,6 +35,41 @@ GameState::~GameState() {
   delete[] grid;
 }
 
+void GameState::initState(const std::string& state) {
+  std::lock_guard<std::mutex> lck(state_mutex);
+  if (size < 8)
+    return;
+
+  const int* data = (int*) state;
+  const int* max_data;
+
+  T = ntohl(*data);
+  P = ntohl(*(data + 1));
+
+  unsigned int exp_size = 8 * T + 16 * P + 8;
+
+  if (size < exp_size || (T+P) > N*N)
+    return;
+
+  for ( ; data < max_data; data += 2) {
+    int x = ntohl(*data);
+    int y = ntohl(*(data + 1));
+    treasures.insert(new Treasure(x, y));
+  }
+
+  int status_y = maxy + 1;
+  data = max_data;
+  max_data = data + 4 * P;
+
+  for ( ; data < max_data; data += 4) {
+    int p_id = ntohl(*data);
+    int p_T = ntohl(*(data + 1));
+    int x = ntohl(*(data + 2));
+    int y = ntohl(*(data + 3));
+    players.insert(new Player(p_id, p_T, x, y);
+  }
+}
+
 void GameState::initTreasures() {
   std::lock_guard<std::mutex> lck(state_mutex);
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -56,8 +92,14 @@ void GameState::initTreasures() {
   }
 }
 
-void GameState::updatePosition(Player* player, int new_x, int new_y) {
+void GameState::updatePosition(Player* player, int new_x, int new_y, bool async) {
   std::lock_guard<std::mutex> lck(state_mutex);
+
+  if (async) {
+    std::unique_lock<std::mutex> cv_lck(cv_mutex);
+    if (cv_start.wait_for(cv_lck, std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout)
+      return;
+  }
 
   if (checkBounds(new_x, new_y)) {
     Cell* cell = grid[new_x][new_y];
@@ -74,9 +116,12 @@ void GameState::updatePosition(Player* player, int new_x, int new_y) {
       grid[new_x][new_y] = player;
       player->mx = new_x;
       player->my = new_y;
-      return;
     }
   }
+}
+
+inline void synchronize() {
+  cv_start.notify_one();
 }
 
 bool GameState::checkBounds(int x, int y) const {

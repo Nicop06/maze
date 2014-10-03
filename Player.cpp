@@ -1,7 +1,7 @@
 #include "Player.h"
 #include <arpa/inet.h>
 
-void Player::move(char dir) {
+void Player::move(char dir, bool async) {
   int new_x(mx), new_y(my);
 
   switch(dir) {
@@ -25,7 +25,7 @@ void Player::move(char dir) {
       return;
   }
 
-  pGameState->updatePosition(this, new_x, new_y);
+  pGameState->updatePosition(this, new_x, new_y, async);
 }
 
 std::string Player::getState() {
