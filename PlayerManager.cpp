@@ -91,7 +91,8 @@ void PlayerManager::processMessage() {
         if (cmd == "join") {
           int id = htonl(player->id());
           int N = htonl(gameState.getSize());
-          msg.append((char*) &head_init, 4);
+          int head = htonl(INIT);
+          msg.append((char*) &head, 4);
           msg.append((char*) &id, 4);
           msg.append((char*) &N, 4);
         }
@@ -100,7 +101,8 @@ void PlayerManager::processMessage() {
           if (cmd != "NoMove")
             player->move(cmd[0]);
 
-          msg.append((char*) &head_state, 4);
+          int head = htonl(STATE);
+          msg.append((char*) &head, 4);
           msg += gameState.getState();
 
           if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {

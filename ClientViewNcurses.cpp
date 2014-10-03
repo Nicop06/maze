@@ -66,21 +66,21 @@ void ClientViewNcurses::loop() {
   clientThread.exit();
 }
 
-int ClientViewNcurses::update(const std::string& state) {
-  if (state.size() < 8 || !win || !running)
+int ClientViewNcurses::update(const char* state, const size_t size) {
+  if (size < 8 || !win || !running)
     return -1;
 
-  const int* data = (int*) state.data();
+  const int* data = (int*) state;
   const int* max_data;
 
   int T = ntohl(*data);
   int P = ntohl(*(data + 1));
-  unsigned int size = 8 * T + 16 * P + 8;
+  unsigned int exp_size = 8 * T + 16 * P + 8;
 
   data += 2;
   max_data = data + 2 * T;
 
-  if (state.size() < size || (T+P) > N*N)
+  if (size < exp_size || (T+P) > N*N)
     return -1;
 
   int maxx, maxy, begx, begy;
@@ -137,5 +137,5 @@ int ClientViewNcurses::update(const std::string& state) {
   refresh();
   wrefresh(win);
 
-  return size;
+  return exp_size;
 }

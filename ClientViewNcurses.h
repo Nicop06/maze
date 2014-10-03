@@ -15,7 +15,7 @@ class ClientViewNcurses : public ClientView {
     void init(int id, int N);
 
     // Update the view
-    int update(const std::string& state);
+    int update(const char* state, size_t size);
 
   private:
     // The size of the game

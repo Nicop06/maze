@@ -14,7 +14,7 @@
 
 bool ServerThread::running = false;
 
-ServerThread::ServerThread(int N, int M, ClientThread* client) : gameState(N, M), ct(client){
+ServerThread::ServerThread(int N, int M, ClientThread* client) : gameState(N, M), ct(client) {
 }
 
 ServerThread::~ServerThread() {

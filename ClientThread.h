@@ -10,6 +10,7 @@
 #include <atomic>
 
 class ServerThread;
+class RemoteServer;
 
 class ClientThread {
   public:
@@ -18,25 +19,23 @@ class ClientThread {
     void initClientServer(int N, int M, const char* port = PORT, const char* servPort = SERV_PORT);
     void initClient(const char* host, const char* port = PORT);
     void exit();
+    int getId() const { return id; }
+
+    // Actions
     void move(char dir);
-    int getId() const;
+    void update(const char* state, size_t size);
+    void initView(int id, int N);
 
   private:
     ClientView* view;
     ServerThread* st;
+    RemoteServer* serv;
     int id;
-    int sockfd;
-    int otherSockfd; //socket to the backup server
-    struct pollfd pfd;
-    
-    std::string buffer;
-    char buf[BUFSIZE];
 
     std::atomic<bool> running;
 
     void init(const char* host, const char* port = PORT);
     void loop();
-    void read();
 };
 
 #endif
