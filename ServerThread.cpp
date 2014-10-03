@@ -12,9 +12,7 @@
 #include "ServerThread.h"
 #include "ClientThread.h"
 
-bool ServerThread::running = false;
-
-ServerThread::ServerThread(int N, int M, ClientThread* client) : gameState(N, M), ct(client) {
+ServerThread::ServerThread(int N, int M, ClientThread* client) : gameState(N, M), ct(client), running(false) {
 }
 
 ServerThread::~ServerThread() {
@@ -24,6 +22,9 @@ ServerThread::~ServerThread() {
     PlayerManager* pm = pair.second;
     delete pm;
   }
+
+  if (loop_th.joinable())
+    loop_th.join();
 }
 
 void ServerThread::init(const char* p, const char* servP) {
@@ -108,6 +109,7 @@ void ServerThread::acceptClients() {
   close(sockfd);
   //chooseBackup();
   std::cout << "Game starting..." << std::endl;
+  loop_th = std::thread(&ServerThread::loop, this);
 }
 
 void ServerThread::loop() {

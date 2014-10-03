@@ -20,20 +20,21 @@ ClientThread::ClientThread() : st(NULL), id(-1), running(false) {
 ClientThread::~ClientThread() {
   exit();
   delete view;
+  delete serv;
+  delete st;
 }
 
 void ClientThread::initClientServer(int N, int M, const char* port, const char* servPort){
   st = new ServerThread(N,M, this);
-  std::thread acceptClient, serverLoop;
+  std::thread acceptClient;
 
   st->init(port,servPort);
   acceptClient = std::thread(&ServerThread::acceptClients, st);
   init("localhost",port);
 
   acceptClient.join();//clients are now all accepted by the server
-  serverLoop = std::thread(&ServerThread::loop, st);
   serv->wait();
-  serverLoop.join();
+  std::cout << "End wait\n";
 }
 
 void ClientThread::initClient(const char* host, const char* port){
@@ -46,11 +47,14 @@ void ClientThread::init(const char* host, const char* port) {
   serv->init(host, port);
   serv->join();
   serv->move(-1);
+  running = true;
 }
 
 void ClientThread::exit() {
-  if (running)
+  if (running) {
     running = false;
+    serv->exit();
+  }
 }
 
 void ClientThread::move(char dir) {

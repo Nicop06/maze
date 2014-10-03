@@ -10,6 +10,8 @@
 class RemoteServer {
   public:
     RemoteServer(ClientThread& ct) : ct(ct), running(false) {}
+    ~RemoteServer();
+
     void init(const char* host, const char* port = PORT);
     void exit();
 

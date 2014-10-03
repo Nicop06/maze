@@ -8,6 +8,15 @@
 
 #include "RemoteServer.h"
 
+RemoteServer::~RemoteServer() {
+  exit();
+
+  if (loop_th.joinable())
+    loop_th.join();
+
+  close(sockfd);
+}
+
 void RemoteServer::init(const char* host, const char* port) {
   struct addrinfo hints, *result, *rp;
 
@@ -47,7 +56,6 @@ void RemoteServer::exit() {
     const char msg[] = "exit";
     const int len = sizeof(msg);
     send(sockfd, msg, len, 0);
-    close(sockfd);
   }
 }
 
