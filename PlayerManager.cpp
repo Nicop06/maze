@@ -8,7 +8,7 @@
 #include <iostream>
 
 PlayerManager::PlayerManager(int sockfd, GameState& gameState)
-  : sockfd(sockfd), gameState(gameState), player(NULL), nb_msg(0), running(false) {
+  : sockfd(sockfd), gameState(gameState), player(NULL), joined(false), nb_msg(0), running(false) {
 }
 
 PlayerManager::~PlayerManager() {
@@ -82,15 +82,8 @@ void PlayerManager::processMessage() {
         return;
       }
 
-      if (!player && cmd.compare(0, 7, "connect") && tmp.length() > old_pos + 12 && tmp[old_pos + 12] == '\0') {
-        int* id = (int*)(tmp.data() + old_pos + 7);
-        player = gameState.getPlayer(ntohl(*id));
-        pos = old_pos + 12;
-        nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
-      }
-
       if (player) {
-        if (cmd == "join") {
+        if (cmd == "join" && !joined) {
           int id = htonl(player->id());
           int N = htonl(gameState.getSize());
           size = htonl(8);
@@ -100,9 +93,9 @@ void PlayerManager::processMessage() {
           msg.append((char*) &size, 4);
           msg.append((char*) &id, 4);
           msg.append((char*) &N, 4);
-        }
+          joined = true;
 
-        if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W" || cmd == "NoMove") {
+        } else if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W" || cmd == "NoMove") {
           if (cmd != "NoMove")
             player->move(cmd[0]);
 
@@ -120,6 +113,11 @@ void PlayerManager::processMessage() {
             return;
           }
         }
+      } else if (joined && cmd.compare(0, 7, "connect") && tmp.length() > old_pos + 12 && tmp[old_pos + 12] == '\0') {
+        int* id = (int*)(tmp.data() + old_pos + 7);
+        player = gameState.getPlayer(ntohl(*id));
+        pos = old_pos + 12;
+        nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
       }
 
       nb_msg--;

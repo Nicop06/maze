@@ -27,6 +27,7 @@ class PlayerManager
 
   private:
     int sockfd;
+    bool joined;
     GameState& gameState;
     Player* player;
     std::string buffer;

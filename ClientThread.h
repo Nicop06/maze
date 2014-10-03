@@ -19,7 +19,6 @@ class ClientThread {
     void initClientServer(int N, int M, const char* port = PORT, const char* servPort = SERV_PORT);
     void initClient(const char* host, const char* port = PORT);
     void exit();
-    int getId() const { return id; }
 
     // Actions
     void move(char dir);
