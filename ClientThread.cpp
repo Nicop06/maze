@@ -45,6 +45,7 @@ void ClientThread::init(const char* host, const char* port) {
   serv = new RemoteServer(*this);
   serv->init(host, port);
   serv->join();
+  serv->move(-1);
 }
 
 void ClientThread::exit() {
@@ -56,7 +57,7 @@ void ClientThread::move(char dir) {
   serv->move(dir);
 }
 
-void ClientThread::update(const char* state, const size_t size) {
+void ClientThread::update(const char* state, const uint32_t size) {
   view->update(state, size);
 }
 

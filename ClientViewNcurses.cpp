@@ -41,7 +41,7 @@ void ClientViewNcurses::init(int id, int N) {
 void ClientViewNcurses::loop() {
   int c;
 
-  while((c = getch()) != 'q' && running) {
+  while ((c = getch()) != 'q' && running) {
     char dir = 0;
 
     switch (c) {
@@ -66,7 +66,7 @@ void ClientViewNcurses::loop() {
   clientThread.exit();
 }
 
-int ClientViewNcurses::update(const char* state, const size_t size) {
+int ClientViewNcurses::update(const char* state, const uint32_t size) {
   if (size < 8 || !win || !running)
     return -1;
 

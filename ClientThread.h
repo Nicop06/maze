@@ -23,7 +23,7 @@ class ClientThread {
 
     // Actions
     void move(char dir);
-    void update(const char* state, size_t size);
+    void update(const char* state, uint32_t size);
     void initView(int id, int N);
 
   private:

@@ -54,8 +54,7 @@ void RemoteServer::exit() {
 void RemoteServer::loop() {
   char buf[BUFSIZE];
   std::string buffer;
-  int len, head;
-  size_t size(0);
+  uint32_t size(0), len, head;
   int* data;
   struct pollfd pfd;
 
@@ -71,7 +70,7 @@ void RemoteServer::loop() {
       buffer.append(buf, len);
     }
 
-    if (size == 0 && buffer.length() >= 8) {
+    if (size == 0 && buffer.size() >= 8) {
       data = (int*) buffer.data();
       head = ntohl(data[0]);
       size = ntohl(data[1]);
@@ -81,12 +80,15 @@ void RemoteServer::loop() {
       data = (int*) (buffer.data() + 8);
       switch (head) {
         case INIT:
-          ct.initView(data[0], data[1]);
+          ct.initView(ntohl(data[0]), ntohl(data[1]));
           break;
         case STATE:
           ct.update(buffer.data() + 8, size);
           break;
       }
+
+      buffer.erase(0, size + 8);
+      size = 0;
     }
   }
 }

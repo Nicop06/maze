@@ -1,10 +1,11 @@
 #include "PlayerManager.h"
+#include "config.h"
+
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <algorithm>
 #include <iostream>
-#include "config.h"
 
 PlayerManager::PlayerManager(int sockfd, GameState& gameState)
   : sockfd(sockfd), gameState(gameState), player(NULL), nb_msg(0), running(false) {
@@ -44,7 +45,7 @@ void PlayerManager::addMessage(const std::string& msg) {
     return;
 
   std::unique_lock<std::mutex> lck(msg_mx);
-  size_t nb_new = std::count(msg.begin(), msg.end(), '\0');
+  uint32_t nb_new = std::count(msg.begin(), msg.end(), '\0');
   buffer += msg;
 
   if (nb_new > 0)
@@ -55,8 +56,9 @@ void PlayerManager::addMessage(const std::string& msg) {
 
 void PlayerManager::processMessage() {
   size_t pos, old_pos;
+  uint32_t size, head;
   std::string tmp, cmd, msg;
-  
+
   while (running) {
     msg.clear();
     std::unique_lock<std::mutex> lck(msg_mx);
@@ -70,7 +72,7 @@ void PlayerManager::processMessage() {
     old_pos = 0;
 
     while ((pos = tmp.find('\0', old_pos)) != std::string::npos) {
-      
+
       cmd.append(tmp, old_pos, pos - old_pos);
 
       if (cmd == "exit") {
@@ -91,8 +93,11 @@ void PlayerManager::processMessage() {
         if (cmd == "join") {
           int id = htonl(player->id());
           int N = htonl(gameState.getSize());
-          int head = htonl(INIT);
+          size = htonl(8);
+
+          head = htonl(INIT);
           msg.append((char*) &head, 4);
+          msg.append((char*) &size, 4);
           msg.append((char*) &id, 4);
           msg.append((char*) &N, 4);
         }
@@ -101,9 +106,13 @@ void PlayerManager::processMessage() {
           if (cmd != "NoMove")
             player->move(cmd[0]);
 
-          int head = htonl(STATE);
+          head = htonl(STATE);
           msg.append((char*) &head, 4);
-          msg += gameState.getState();
+
+          const std::string state = gameState.getState();
+          size = htonl(state.size());
+          msg.append((char*) &size, 4);
+          msg += state;
 
           if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
             std::cerr << "Error while sending the state to client " << player->id() << std::endl;
