@@ -246,3 +246,7 @@ void ServerThread::newServer(const PlayerManager* pm, const std::string& host, c
     }
   }
 }
+
+void ServerThread::syncMove(Player* player, char dir) {
+  ct.syncMove(player, dir);
+}

@@ -93,15 +93,11 @@ void GameState::initTreasures() {
   }
 }
 
-void GameState::updatePosition(Player* player, int new_x, int new_y, GameState::async_callback async) {
+void GameState::updatePosition(Player* player, int new_x, int new_y, GameState::callback synchronize) {
   std::lock_guard<std::mutex> lck(state_mutex);
 
-  if (async) {
-    std::unique_lock<std::mutex> cv_lck(sync_mutex);
-    async(*this);
-    if (cv_sync.wait_for(cv_lck, std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout)
-      return;
-  }
+  if (synchronize)
+    synchronize();
 
   if (checkBounds(new_x, new_y)) {
     Cell* cell = grid[new_x][new_y];
@@ -120,10 +116,6 @@ void GameState::updatePosition(Player* player, int new_x, int new_y, GameState::
       player->my = new_y;
     }
   }
-}
-
-void GameState::synchronize() {
-  cv_sync.notify_one();
 }
 
 bool GameState::checkBounds(int x, int y) const {

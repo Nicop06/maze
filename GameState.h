@@ -13,7 +13,7 @@ class Treasure;
 
 class GameState {
   public:
-    typedef std::function<void(GameState&)> async_callback;
+    typedef std::function<void(void)> callback;
 
     GameState(int N, int M);
     ~GameState();
@@ -25,7 +25,7 @@ class GameState {
     Player* addPlayer(int id);
     void removePlayer(int id);
 
-    void updatePosition(Player* player, int new_x, int new_y, async_callback async);
+    void updatePosition(Player* player, int new_x, int new_y, callback synchronize);
     inline bool checkBounds(int x, int y) const;
 
     void synchronize();
@@ -48,10 +48,6 @@ class GameState {
 
     // The number of player
     int P;
-
-    // This is for async call
-    std::condition_variable cv_sync;
-    std::mutex sync_mutex;
 
     // The grid
     Cell*** grid;

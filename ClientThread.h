@@ -30,6 +30,11 @@ class ClientThread {
 
     // Actions
     void move(char dir);
+    void movePlayer(int id, char dir);
+    void syncMove(Player* player, char dir);
+    void sendSync(int id, char dir);
+    void moveDone();
+
     void update(const char* state, uint32_t size);
     void initView(int id, int N);
     void setState(GameState* gameState);
@@ -46,8 +51,12 @@ class ClientThread {
     Player* player;
 
     std::atomic<bool> running;
-    std::condition_variable cv;
-    std::mutex cv_mtx;
+    std::condition_variable cv_loop;
+    std::mutex loop_mtx;
+
+    std::atomic<int> nb_sync;
+    std::condition_variable cv_sync;
+    std::mutex sync_mtx;
 
     void init();
     void createBackups();

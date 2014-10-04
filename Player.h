@@ -17,11 +17,11 @@ class Player: public Cell {
     bool isTreasure() const { return false; }
     bool isPlayer() const { return true; }
 
-    void move(char dir, GameState::async_callback async = NULL);
+    void move(char dir, GameState::callback synchronize = NULL);
 
     std::string getState();
 
-    friend void GameState::updatePosition(Player* player, int new_x, int new_y, GameState::async_callback async);
+    friend void GameState::updatePosition(Player* player, int new_x, int new_y, GameState::callback synchronize);
 
   private:
     // The id of the player

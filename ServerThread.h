@@ -25,6 +25,7 @@ class ServerThread {
 
     bool createServer();
     void newServer(const PlayerManager* pm, const std::string& host, const std::string& port);
+    void syncMove(Player* player, char dir);
 
     const std::string& getPort() const { return port; }
 

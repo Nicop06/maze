@@ -19,6 +19,7 @@ class RemoteServer {
     bool move(char dir);
     bool join();
     bool connectSrv(int id);
+    bool movePlayer(int id, char dir);
 
   private:
     ClientThread& ct;
@@ -29,8 +30,10 @@ class RemoteServer {
     int sockfd;
 
     void loop();
-    void sendServer(const std::string& host);
+    void createServer(int N, const char* state, uint32_t size);
+    bool sendServer(const std::string& host);
     bool sendMsg(const std::string& msg);
+    bool playerMoved();
     const std::string getHost() const;
 };
 

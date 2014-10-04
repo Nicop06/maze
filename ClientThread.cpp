@@ -6,6 +6,7 @@
 
 #include <string>
 #include <iostream>
+#include <chrono>
 
 #include "ClientThread.h"
 #include "ServerThread.h"
@@ -50,8 +51,8 @@ void ClientThread::init() {
 void ClientThread::loop() {
   createBackups();
 
-  std::unique_lock<std::mutex> lck(cv_mtx);
-  while (running) cv.wait(lck);
+  std::unique_lock<std::mutex> lck(loop_mtx);
+  while (running) cv_loop.wait(lck);
 }
 
 void ClientThread::addServer(RemoteServer* serv, bool join) {
@@ -108,20 +109,54 @@ void ClientThread::exit() {
     for (RemoteServer* srv: servers)
       srv->exit();
 
-    std::lock_guard<std::mutex> lck(cv_mtx);
+    std::lock_guard<std::mutex> lck(loop_mtx);
     running = false;
-    cv.notify_all();
+    cv_loop.notify_all();
   }
 }
 
 void ClientThread::move(char dir) {
   if (player) {
-    player->move(dir);
+    syncMove(player, dir);
     const std::string state = pGameState->getState();
     update(state.data(), state.size());
   } else if (servers.size() > 0) {
     for (auto it = servers.begin(); it != servers.end() && !(*it)->move(dir); ++it);
   }
+}
+
+void ClientThread::movePlayer(int id, char dir) {
+  Player* player = pGameState->getPlayer(id);
+  if (player)
+    player->move(dir);
+}
+
+void ClientThread::syncMove(Player* player, char dir) {
+  if (player)
+    player->move(dir, std::bind(&ClientThread::sendSync, this, player->id(), dir));
+}
+
+void ClientThread::sendSync(int id, char dir) {
+  std::unique_lock<std::mutex> lck(sync_mtx);
+  nb_sync = 0;
+
+  for (RemoteServer* serv: servers) {
+    if (serv->movePlayer(id, dir))
+      ++nb_sync;
+  }
+
+  std::chrono::steady_clock::time_point begin;
+  while (nb_sync > 0) {
+    if (cv_sync.wait_for(lck, begin - std::chrono::steady_clock::now()
+          + std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout)
+      return;
+  }
+}
+
+void ClientThread::moveDone() {
+  std::lock_guard<std::mutex> lck(sync_mtx);
+  nb_sync--;
+  cv_sync.notify_one();
 }
 
 void ClientThread::update(const char* state, const uint32_t size) {

@@ -98,8 +98,14 @@ void RemoteServer::loop() {
           ct.update(buffer.data() + 8, size);
           break;
         case CREATE_SERVER:
-          const ServerThread* st = ct.startServer(data[0], buffer.data() + 12, size - 4);
-          sendServer(st->getPort());
+          createServer(ntohl(data[0]), buffer.data() + 12, size - 4);
+          break;
+        case MOVE_PLAYER:
+          ct.movePlayer(ntohl(data[0]), buffer[12]);
+          playerMoved();
+          break;
+        case PLAYER_MOVED:
+          ct.moveDone();
           break;
       }
 
@@ -139,18 +145,54 @@ bool RemoteServer::connectSrv(int id) {
   return sendMsg(msg);
 }
 
-void RemoteServer::sendServer(const std::string& port) {
+void RemoteServer::createServer(int N, const char* state, uint32_t size) {
+  const ServerThread* st = ct.startServer(N, state, size);
+  if (st) {
+    sendServer(st->getPort());
+  } else {
+    sendServer("");
+  }
+}
+
+bool RemoteServer::sendServer(const std::string& port) {
   std::string msg = "server";
   msg += '\0';
-  msg += getHost();
+
+  if (port.size() > 0)
+    msg += getHost();
+
   msg += '\0';
   msg += port;
+  msg += '\0';
 
-  sendMsg(msg);
+  return sendMsg(msg);
+}
+
+bool RemoteServer::movePlayer(int id, char dir) {
+  std::string msg;
+  int head = htonl(MOVE_PLAYER);
+  int size = htonl(5);
+  int n_id = htonl(id);
+  msg.append((char*) &head, 4);
+  msg.append((char*) &size, 4);
+  msg.append((char*) &n_id, 4);
+  msg += dir;
+
+  return sendMsg(msg);
+}
+
+bool RemoteServer::playerMoved() {
+  std::string msg;
+  int head = htonl(PLAYER_MOVED);
+  int size = htonl(0);
+  msg.append((char*) &head, 4);
+  msg.append((char*) &size, 4);
+
+  return sendMsg(msg);
 }
 
 bool RemoteServer::sendMsg(const std::string& msg) {
-  if (send(sockfd, msg.c_str(), msg.size() + 1, 0) == -1) {
+  if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
     exit();
     return false;
   }
