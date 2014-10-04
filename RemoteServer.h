@@ -16,8 +16,9 @@ class RemoteServer {
     void exit();
 
     // Actions
-    void move(char dir);
-    void join();
+    bool move(char dir);
+    bool join();
+    bool connectSrv(int id);
 
     void wait() { if(loop_th.joinable()) loop_th.join(); }
 
@@ -30,6 +31,7 @@ class RemoteServer {
     int sockfd;
 
     void loop();
+    bool sendMsg(const std::string& msg);
 };
 
 #endif

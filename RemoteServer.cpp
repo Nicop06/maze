@@ -87,10 +87,10 @@ void RemoteServer::loop() {
     if (size > 0 && buffer.size() >= size + 8) {
       data = (int*) (buffer.data() + 8);
       switch (head) {
-        case INIT:
+        case INIT_CLIENT:
           ct.initView(ntohl(data[0]), ntohl(data[1]));
           break;
-        case STATE:
+        case UPDATE_STATE:
           ct.update(buffer.data() + 8, size);
           break;
       }
@@ -101,7 +101,7 @@ void RemoteServer::loop() {
   }
 }
 
-void RemoteServer::move(char dir) {
+bool RemoteServer::move(char dir) {
   std::string msg;
 
   switch (dir) {
@@ -112,20 +112,30 @@ void RemoteServer::move(char dir) {
       msg += dir;
       break;
 
-    case 0:
-      return;
-
     default:
       msg = "NoMove";
       break;
   }
 
-  if (send(sockfd, msg.data(), msg.length() + 1, 0) == -1)
-    exit();
+  return sendMsg(msg);
 }
 
-void RemoteServer::join() {
-  const char msg[] = "join";
-  if (send(sockfd, msg, sizeof(msg), 0) == -1)
+bool RemoteServer::join() {
+  return sendMsg("join");
+}
+
+bool RemoteServer::connectSrv(int id) {
+  std::string msg = "connect";
+  int nId = ntohl(id);
+  msg.append((char*) &nId, 4);
+  return sendMsg(msg);
+}
+
+bool RemoteServer::sendMsg(const std::string& msg) {
+  if (send(sockfd, msg.c_str(), msg.size() + 1, 0) == -1) {
     exit();
+    return false;
+  }
+
+  return true;
 }

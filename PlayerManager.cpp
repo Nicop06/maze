@@ -108,7 +108,7 @@ void PlayerManager::join() {
   int id = htonl(player->id());
   int N = htonl(gameState.getSize());
   uint32_t size = htonl(8);
-  uint32_t head = htonl(INIT);
+  uint32_t head = htonl(INIT_CLIENT);
 
   msg.append((char*) &head, 4);
   msg.append((char*) &size, 4);
@@ -122,7 +122,7 @@ void PlayerManager::move(const std::string& cmd) {
   if (cmd != "NoMove")
     player->move(cmd[0]);
 
-  uint32_t head = htonl(STATE);
+  uint32_t head = htonl(UPDATE_STATE);
   msg.append((char*) &head, 4);
 
   const std::string state = gameState.getState();
