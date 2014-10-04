@@ -5,8 +5,8 @@
 #include <iostream>
 #include <arpa/inet.h>
 
-ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread)
-  : ClientView(clientThread), N(0), win(NULL), running(false) {
+ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread) : ClientView(clientThread),
+  N(0), main_win(NULL), game_win(NULL), dbg_win(NULL), running(false) {
   std::cout << "Waiting for game to start..." << std::endl;
 }
 
@@ -33,11 +33,45 @@ void ClientViewNcurses::init(int id, int N) {
     curs_set(0);
     keypad(stdscr, TRUE);
 
-    win = newwin(N+2, 2*N+1, 2, 2);
+    int maxx, maxy;
+    getmaxyx(stdscr, maxy, maxx);
+
+    int width = std::max(2*N+6, 20);
+
+    main_win = newwin(std::max(2*N+2, maxy), width, 0, 0);
+    game_win = newwin(N+2, 2*N+1, 2, 2);
+    dbg_win = newwin(std::max(N+10, maxy), maxx - width, 0, width);
+
+    if (!main_win || !game_win || !dbg_win)
+      return;
+
+    this->setp(0, 0);
+    this->setg(0, 0, 0);
+    std::cout.rdbuf(this);
+    std::cerr.rdbuf(this);
+
+    scrollok(dbg_win, true);
 
     running = true;
     loop_th = std::thread(&ClientViewNcurses::loop, this);
   }
+}
+
+int ClientViewNcurses::overflow(int c) {
+  int ret = c;
+  if(c != EOF) {
+    if(waddch(dbg_win, (chtype)c) == ERR)
+      ret = EOF;
+  }
+  if((EOF==c) || std::isspace(c)) {
+    if(EOF == this->sync())
+      ret = EOF;
+  }
+  return ret;
+}
+
+int ClientViewNcurses::sync() {
+  return (wrefresh(dbg_win) == ERR) ? EOF : 0;
 }
 
 void ClientViewNcurses::loop() {
@@ -72,7 +106,7 @@ void ClientViewNcurses::loop() {
 }
 
 int ClientViewNcurses::update(const char* state, const uint32_t size) {
-  if (size < 8 || !win || !running)
+  if (size < 8 || !running)
     return -1;
 
   const int* data = (int*) state;
@@ -89,18 +123,18 @@ int ClientViewNcurses::update(const char* state, const uint32_t size) {
   max_data = data + 2 * T;
 
   int maxx, maxy, begx, begy;
-  getmaxyx(win, maxy, maxx);
-  getbegyx(win, begy, begx);
+  getmaxyx(game_win, maxy, maxx);
+  getbegyx(game_win, begy, begx);
 
-  clear();
-  wclear(win);
-  box(win, 0, 0);
-  mvprintw(0, 0, "Presss 'q' to exit");
+  wclear(game_win);
+  wclear(main_win);
+  box(game_win, 0, 0);
+  mvwprintw(main_win, 0, 0, "Presss 'q' to exit");
 
   for ( ; data < max_data; data += 2) {
     int x = ntohl(*data);
     int y = ntohl(*(data + 1));
-    mvwaddch(win, y+1, 2*x+1, 'T');
+    mvwaddch(game_win, y+1, 2*x+1, 'T');
   }
 
   int status_y = maxy + 1;
@@ -118,11 +152,11 @@ int ClientViewNcurses::update(const char* state, const uint32_t size) {
       best_id = p_id;
 
     if (p_id != id) {
-      mvprintw(++status_y, begx+1, "Player %d: %d", p_id, p_T);
-      mvwaddch(win, y+1, 2*x+1, 'P');
+      mvwprintw(main_win, ++status_y, begx+1, "Player %d: %d", p_id, p_T);
+      mvwaddch(game_win, y+1, 2*x+1, 'P');
     } else {
-      mvprintw(begy-1, begx+1, "Id: %d   Score: %d", p_id, p_T);
-      mvwaddch(win, y+1, 2*x+1, 'Y');
+      mvwprintw(main_win, begy-1, begx+1, "Id: %d   Score: %d", p_id, p_T);
+      mvwaddch(game_win, y+1, 2*x+1, 'Y');
     }
   }
 
@@ -134,13 +168,14 @@ int ClientViewNcurses::update(const char* state, const uint32_t size) {
       msg = "Player " + std::to_string(best_id) + " won";
     }
 
-    wclear(win);
-    box(win, 0, 0);
-    mvwprintw(win, (maxy - 1) / 2, std::max(1, (int)((maxx - msg.length()) / 2)), "%s", msg.data());
+    wclear(game_win);
+    box(game_win, 0, 0);
+    mvwprintw(game_win, (maxy - 1) / 2, std::max(1, (int)((maxx - msg.length()) / 2)), "%s", msg.data());
   }
 
   refresh();
-  wrefresh(win);
+  wrefresh(main_win);
+  wrefresh(game_win);
 
   return exp_size;
 }
