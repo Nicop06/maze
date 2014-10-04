@@ -43,6 +43,8 @@ class ClientThread {
     ClientView* view;
     ServerThread* st;
     std::unordered_set<RemoteServer*> servers;
+    std::unordered_set<RemoteServer*> old_servers;
+    std::mutex servers_mtx;
 
     int id;
     std::atomic<bool> initialized;
@@ -59,6 +61,8 @@ class ClientThread {
     std::mutex sync_mtx;
 
     void init();
+    void delSrv(RemoteServer* srv);
+    void cleanServers();
     void createBackups();
 };
 

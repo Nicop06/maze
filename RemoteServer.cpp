@@ -10,7 +10,7 @@
 #include "ServerThread.h"
 
 RemoteServer::~RemoteServer() {
-  exit();
+  running = false;
 
   if (loop_th.joinable())
     loop_th.join();
@@ -59,8 +59,6 @@ void RemoteServer::exit() {
     running = false;
     sendMsg("exit");
   }
-
-  ct.delServer(this);
 }
 
 void RemoteServer::loop() {
@@ -77,6 +75,7 @@ void RemoteServer::loop() {
     if (poll(&pfd, 1, 100) > 0) {
       if ((len = recv(sockfd, buf, BUFSIZE, MSG_DONTWAIT)) <= 0) {
         exit();
+        ct.delServer(this);
         return;
       }
       buffer.append(buf, len);
@@ -102,7 +101,8 @@ void RemoteServer::loop() {
           break;
         case MOVE_PLAYER:
           ct.movePlayer(ntohl(data[0]), buffer[12]);
-          playerMoved();
+          if (!playerMoved())
+            ct.delServer(this);
           break;
         case PLAYER_MOVED:
           ct.moveDone();
@@ -147,11 +147,9 @@ bool RemoteServer::connectSrv(int id) {
 
 void RemoteServer::createServer(int N, const char* state, uint32_t size) {
   const ServerThread* st = ct.startServer(N, state, size);
-  if (st) {
-    sendServer(st->getPort());
-  } else {
-    sendServer("");
-  }
+  std::string port = st ? st->getPort() : "";
+  if (!sendServer(port))
+    ct.delServer(this);
 }
 
 bool RemoteServer::sendServer(const std::string& port) {
