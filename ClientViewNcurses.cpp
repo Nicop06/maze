@@ -26,7 +26,7 @@ void ClientViewNcurses::init(int id, int N) {
     this->id = id;
 
     initscr();
-    cbreak();
+    halfdelay(2);
     noecho();
     curs_set(0);
     keypad(stdscr, TRUE);
@@ -56,6 +56,9 @@ void ClientViewNcurses::loop() {
         break;
       case KEY_RIGHT:
         dir = 'E';
+        break;
+      case ERR:
+        dir = -1;
         break;
     }
 
