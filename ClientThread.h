@@ -45,7 +45,7 @@ class ClientThread {
     std::unordered_set<RemoteServer*> servers;
 
     int id;
-    bool initialized;
+    std::atomic<bool> initialized;
 
     GameState* pGameState;
     Player* player;
