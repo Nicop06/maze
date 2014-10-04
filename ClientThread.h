@@ -32,7 +32,9 @@ class ClientThread {
     ClientView* view;
     ServerThread* st;
     RemoteServer* serv;
+
     int id;
+    bool initialized;
 
     GameState* pGameState;
     Player* player;

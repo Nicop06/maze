@@ -13,7 +13,8 @@
 #include "ClientViewNcurses.h"
 #include "GameState.h"
 
-ClientThread::ClientThread() : st(NULL), serv(NULL), id(-1), pGameState(NULL), player(NULL), running(false) {
+ClientThread::ClientThread() : st(NULL), serv(NULL), id(-1), initialized(false),
+  pGameState(NULL), player(NULL), running(false) {
   view = new ClientViewNcurses(*this);
 }
 
@@ -67,11 +68,14 @@ void ClientThread::update(const char* state, const uint32_t size) {
 }
 
 void ClientThread::initView(int id, int N) {
-  this->id = id;
-  view->init(id, N);
+  if (!initialized) {
+    this->id = id;
+    view->init(id, N);
+    initialized = true;
 
-  if (pGameState && !player)
-    this->player = pGameState->addPlayer(id);
+    if (pGameState && !player)
+      this->player = pGameState->addPlayer(id);
+  }
 }
 
 void ClientThread::setState(GameState* gameState) {
