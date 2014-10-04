@@ -10,21 +10,20 @@
 #include <cstring>
 
 #include "ServerThread.h"
-#include "ClientThread.h"
 
-ServerThread::ServerThread(int N, int M, ClientThread* client) : gameState(N, M), ct(client), running(false) {
+ServerThread::ServerThread(int N, int M, ClientThread& client) : gameState(N, M), ct(client), running(false) {
 }
 
 ServerThread::~ServerThread() {
   running = false;
 
+  if (loop_th.joinable())
+    loop_th.join();
+
   for (const auto& pair: pms) {
     PlayerManager* pm = pair.second;
     delete pm;
   }
-
-  if (loop_th.joinable())
-    loop_th.join();
 }
 
 void ServerThread::init(const char* p, const char* servP) {
@@ -73,6 +72,8 @@ void ServerThread::init(const char* p, const char* servP) {
 void ServerThread::acceptClients() {
   struct pollfd pfd_listen;
   int playerId = 0;
+
+
 
   pfd_listen.fd = sockfd;
   pfd_listen.events = POLLIN;

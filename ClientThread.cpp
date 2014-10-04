@@ -25,7 +25,7 @@ ClientThread::~ClientThread() {
 }
 
 void ClientThread::initClientServer(int N, int M, const char* port, const char* servPort){
-  st = new ServerThread(N,M, this);
+  st = new ServerThread(N,M, *this);
   std::thread acceptClient;
 
   st->init(port,servPort);

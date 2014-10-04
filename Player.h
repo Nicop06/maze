@@ -6,9 +6,9 @@
 
 class Player: public Cell {
   public:
-    Player(GameState* state, int x, int y, int id, int T)
-      : Cell(x, y), mId(id), T(0), pGameState(gameState) {}
-    Player(GameState* state, int x, int y, int id) : Player(state, x, y, id, 0) {}
+    Player(GameState* gameState, int x, int y, int id, int T)
+      : Cell(x, y), mId(id), T(T), pGameState(gameState) {}
+    Player(GameState* gameState, int x, int y, int id) : Player(gameState, x, y, id, 0) {}
     ~Player() {}
 
     void incNbTreasures() { T++; }
@@ -17,11 +17,11 @@ class Player: public Cell {
     bool isTreasure() const { return false; }
     bool isPlayer() const { return true; }
 
-    void move(char dir, bool async = false);
+    void move(char dir, GameState::async_callback async = NULL);
 
     std::string getState();
 
-    friend void GameState::updatePosition(Player* player, int new_x, int new_y);
+    friend void GameState::updatePosition(Player* player, int new_x, int new_y, GameState::async_callback async);
 
   private:
     // The id of the player

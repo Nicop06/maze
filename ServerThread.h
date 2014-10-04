@@ -2,6 +2,7 @@
 #define _SERVERTHREAD_GUARD
 
 #include "GameState.h"
+#include "ClientThread.h"
 #include "PlayerManager.h"
 #include "config.h"
 
@@ -11,11 +12,9 @@
 #include <map>
 #include <poll.h>
 
-class ClientThread;
-
 class ServerThread {
   public:
-    ServerThread(int N, int M, ClientThread* client);
+    ServerThread(int N, int M, ClientThread& client);
     ~ServerThread();
 
     void init(const char* port = PORT, const char* servPort = SERV_PORT);
@@ -30,7 +29,7 @@ class ServerThread {
     std::vector<struct pollfd> fds;
 
     GameState gameState;
-    ClientThread* ct;
+    ClientThread& ct;
     std::map<int, PlayerManager*> pms; //sockfd to playerManager
 
     std::thread loop_th;
@@ -38,7 +37,6 @@ class ServerThread {
 
     void loop();
 
-    void waitClientsJoin();
     void chooseBackup();
 };
 

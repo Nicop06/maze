@@ -8,7 +8,7 @@
 #include <iostream>
 
 PlayerManager::PlayerManager(int sockfd, GameState& gameState)
-  : sockfd(sockfd), gameState(gameState), player(NULL), joined(false), nb_msg(0), running(false) {
+  : sockfd(sockfd), joined(false), gameState(gameState), player(NULL), nb_msg(0), running(false) {
 }
 
 PlayerManager::~PlayerManager() {

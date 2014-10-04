@@ -35,7 +35,7 @@ GameState::~GameState() {
   delete[] grid;
 }
 
-void GameState::initState(const std::string& state) {
+void GameState::initState(const char* state, uint32_t size) {
   std::lock_guard<std::mutex> lck(state_mutex);
   if (size < 8)
     return;
@@ -46,10 +46,13 @@ void GameState::initState(const std::string& state) {
   T = ntohl(*data);
   P = ntohl(*(data + 1));
 
-  unsigned int exp_size = 8 * T + 16 * P + 8;
+  const uint32_t exp_size = 8 * T + 16 * P + 8;
 
   if (size < exp_size || (T+P) > N*N)
     return;
+
+  data += 2;
+  max_data = data + 2 * T;
 
   for ( ; data < max_data; data += 2) {
     int x = ntohl(*data);
@@ -57,7 +60,6 @@ void GameState::initState(const std::string& state) {
     treasures.insert(new Treasure(x, y));
   }
 
-  int status_y = maxy + 1;
   data = max_data;
   max_data = data + 4 * P;
 
@@ -66,7 +68,7 @@ void GameState::initState(const std::string& state) {
     int p_T = ntohl(*(data + 1));
     int x = ntohl(*(data + 2));
     int y = ntohl(*(data + 3));
-    players.insert(new Player(p_id, p_T, x, y);
+    players[p_id] = new Player(this, x, y, p_id, p_T);
   }
 }
 
@@ -92,12 +94,13 @@ void GameState::initTreasures() {
   }
 }
 
-void GameState::updatePosition(Player* player, int new_x, int new_y, bool async) {
+void GameState::updatePosition(Player* player, int new_x, int new_y, GameState::async_callback async) {
   std::lock_guard<std::mutex> lck(state_mutex);
 
   if (async) {
-    std::unique_lock<std::mutex> cv_lck(cv_mutex);
-    if (cv_start.wait_for(cv_lck, std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout)
+    std::unique_lock<std::mutex> cv_lck(sync_mutex);
+    async(*this);
+    if (cv_sync.wait_for(cv_lck, std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout)
       return;
   }
 
@@ -120,8 +123,8 @@ void GameState::updatePosition(Player* player, int new_x, int new_y, bool async)
   }
 }
 
-inline void synchronize() {
-  cv_start.notify_one();
+void GameState::synchronize() {
+  cv_sync.notify_one();
 }
 
 bool GameState::checkBounds(int x, int y) const {
@@ -147,7 +150,7 @@ Player* GameState::addPlayer(int id) {
     int y = distribution(generator);
 
     if (!grid[x][y]) {
-      Player* player = new Player(x, y, id, this);
+      Player* player = new Player(this, x, y, id);
       grid[x][y] = player;
       players[id] = player;
       ++P;

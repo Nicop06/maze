@@ -75,13 +75,13 @@ int ClientViewNcurses::update(const char* state, const uint32_t size) {
 
   int T = ntohl(*data);
   int P = ntohl(*(data + 1));
-  unsigned int exp_size = 8 * T + 16 * P + 8;
-
-  data += 2;
-  max_data = data + 2 * T;
+  const uint32_t exp_size = 8 * T + 16 * P + 8;
 
   if (size < exp_size || (T+P) > N*N)
     return -1;
+
+  data += 2;
+  max_data = data + 2 * T;
 
   int maxx, maxy, begx, begy;
   getmaxyx(win, maxy, maxx);

@@ -1,7 +1,7 @@
 #include "Player.h"
 #include <arpa/inet.h>
 
-void Player::move(char dir, bool async) {
+void Player::move(char dir, GameState::async_callback async) {
   int new_x(mx), new_y(my);
 
   switch(dir) {
