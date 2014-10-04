@@ -4,9 +4,11 @@
 
 #include "ServerThread.h"
 #include "ClientThread.h"
+#include "RemoteServer.h"
+#include "config.h"
 
 void usage() {
-  std::cout << "Usage: maze -s N M [PORT] [SERV_PORT] or HOST [PORT]" << std::endl;
+  std::cout << "Usage: maze -s N M [PORT] or HOST [PORT]" << std::endl;
   std::cout << "  N: grid size." << std::endl;
   std::cout << "  M: number of treasures." << std::endl;
   exit(-1);
@@ -19,20 +21,26 @@ int main(int argc, char* argv[]) {
   ClientThread ct;
   try {
     if(std::string(argv[1]) == "-s") {
-      if (argc == 4) {
-        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]));
-      } else if (argc == 5) {
-        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]), argv[4]);
-      } else {
+      if (argc < 4 || argc > 5)
         usage();
-      }
-    } else if(argc>=2 && argc <=3) {
-      if (argc == 2) {
-        ct.initClient(argv[1]);
-      } else if (argc == 3) {
-        ct.initClient(argv[1], argv[2]);
-      }
+
+      ServerThread *st = new ServerThread(std::stoi(argv[2]), std::stoi(argv[3]), ct);
+      const char* port = argc == 5 ? argv[4] : PORT;
+      st->init(port);
+      st->acceptClients();
+      ct.init(st);
+    } else {
+      if(argc > 3)
+        usage();
+
+      RemoteServer* serv = new RemoteServer(ct);
+      const char* host = argv[1];
+      const char* port = argc == 3 ? argv[2] : PORT;
+      serv->init(host, port);
+      ct.init(serv);
     }
+
+    ct.loop();
   } catch(std::string const& e){
     std::cerr << "Error : " << e << std::endl;
     return -1;

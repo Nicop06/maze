@@ -5,9 +5,10 @@
 #include "ClientView.h"
 
 #include <poll.h>
-
-#include <thread>
+#include <condition_variable>
 #include <atomic>
+#include <mutex>
+#include <unordered_set>
 
 class ServerThread;
 class RemoteServer;
@@ -18,9 +19,13 @@ class ClientThread {
   public:
     ClientThread();
     ~ClientThread();
-    void initClientServer(int N, int M, const char* port = PORT);
-    void initClient(const char* host, const char* port = PORT);
+    void init(ServerThread* st);
+    void init(RemoteServer* serv);
     void exit();
+    void loop();
+
+    void addServer(RemoteServer* serv, bool join = false);
+    void delServer(RemoteServer* serv);
 
     // Actions
     void move(char dir);
@@ -31,7 +36,7 @@ class ClientThread {
   private:
     ClientView* view;
     ServerThread* st;
-    RemoteServer* serv;
+    std::unordered_set<RemoteServer*> servers;
 
     int id;
     bool initialized;
@@ -40,9 +45,10 @@ class ClientThread {
     Player* player;
 
     std::atomic<bool> running;
+    std::condition_variable cv;
+    std::mutex cv_mtx;
 
-    void init(const char* host, const char* port = PORT);
-    void loop();
+    void init();
 };
 
 #endif

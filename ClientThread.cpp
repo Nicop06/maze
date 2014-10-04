@@ -13,43 +13,67 @@
 #include "ClientViewNcurses.h"
 #include "GameState.h"
 
-ClientThread::ClientThread() : st(NULL), serv(NULL), id(-1), initialized(false),
-  pGameState(NULL), player(NULL), running(false) {
+ClientThread::ClientThread() : st(NULL), servers(2), id(-1), initialized(false),
+pGameState(NULL), player(NULL), running(false) {
   view = new ClientViewNcurses(*this);
 }
 
 ClientThread::~ClientThread() {
   exit();
   delete view;
-  delete serv;
   delete st;
+
+  for (const RemoteServer* serv: servers)
+    delete serv;
 }
 
-void ClientThread::initClientServer(int N, int M, const char* port) {
-  st = new ServerThread(N, M, *this);
-  st->init(port);
-  st->acceptClients();
-  move(-1);
-  st->wait();
+void ClientThread::init(RemoteServer* serv) {
+  addServer(serv, true);
+  init();
 }
 
-void ClientThread::initClient(const char* host, const char* port) {
-  init(host, port);
-  serv->wait();
+void ClientThread::init(ServerThread* st) {
+  this->st = st;
+  init();
 }
 
-void ClientThread::init(const char* host, const char* port) {
-  serv = new RemoteServer(*this);
-  serv->init(host, port);
-  serv->join();
-  serv->move(-1);
+void ClientThread::init() {
   running = true;
+  move(-1);
+}
+
+void ClientThread::loop() {
+  std::unique_lock<std::mutex> lck(cv_mtx);
+  while (running) cv.wait(lck);
+}
+
+void ClientThread::addServer(RemoteServer* serv, bool join) {
+  if (serv != NULL) {
+    servers.insert(serv);
+    if (join) {
+      serv->join();
+    } else {
+      serv->connectSrv(id);
+    }
+  }
+}
+
+void ClientThread::delServer(RemoteServer* serv) {
+  auto it = servers.find(serv);
+  if (it != servers.end()) {
+    servers.erase(it);
+    delete serv;
+  }
 }
 
 void ClientThread::exit() {
   if (running) {
+    for (RemoteServer* srv: servers)
+      srv->exit();
+
+    std::lock_guard<std::mutex> lck(cv_mtx);
     running = false;
-    serv->exit();
+    cv.notify_all();
   }
 }
 
@@ -58,8 +82,8 @@ void ClientThread::move(char dir) {
     player->move(dir);
     const std::string state = pGameState->getState();
     update(state.data(), state.size());
-  } else if (serv) {
-    serv->move(dir);
+  } else if (servers.size() > 0) {
+    for (auto it = servers.begin(); it != servers.end() && !(*it)->move(dir); ++it);
   }
 }
 
