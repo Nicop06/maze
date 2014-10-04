@@ -17,17 +17,15 @@ class ServerThread {
     ServerThread(int N, int M, ClientThread& client);
     ~ServerThread();
 
-    void init(const char* port = PORT, const char* servPort = SERV_PORT);
+    void init(const char* port = NULL);
     void acceptClients();
 
     void wait() { if (loop_th.joinable()) loop_th.join(); }
 
   private:
-    int sockfd;
-    int otherSockfd; //socket to the other server
-    int clientId;
     std::string port;
-    std::string servPort;
+    int sockfd;
+    int clientId;
     std::vector<struct pollfd> fds;
 
     GameState gameState;
@@ -38,8 +36,7 @@ class ServerThread {
     std::atomic<bool> running;
 
     void loop();
-
-    void chooseBackup();
+    bool tryBind(const char* port);
 };
 
 #endif

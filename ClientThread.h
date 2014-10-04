@@ -18,7 +18,7 @@ class ClientThread {
   public:
     ClientThread();
     ~ClientThread();
-    void initClientServer(int N, int M, const char* port = PORT, const char* servPort = SERV_PORT);
+    void initClientServer(int N, int M, const char* port = PORT);
     void initClient(const char* host, const char* port = PORT);
     void exit();
 

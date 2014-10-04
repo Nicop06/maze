@@ -4,7 +4,9 @@
 #include <arpa/inet.h>
 
 #define PORT "3490"
-#define SERV_PORT "3491"
+#define PORT_START 3490
+#define PORT_END   3500
+
 #define BACKLOG 10
 #define TIMEOUT 20
 #define LOCK_TIMEOUT 2

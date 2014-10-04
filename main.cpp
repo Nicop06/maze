@@ -23,8 +23,6 @@ int main(int argc, char* argv[]) {
         ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]));
       } else if (argc == 5) {
         ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]), argv[4]);
-      } else if (argc == 6) {
-        ct.initClientServer(std::stoi(argv[2]), std::stoi(argv[3]), argv[4], argv[5]);
       } else {
         usage();
       }

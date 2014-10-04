@@ -27,10 +27,32 @@ ServerThread::~ServerThread() {
   }
 }
 
-void ServerThread::init(const char* p, const char* servP) {
-  port = p;
-  servPort = servP;
+void ServerThread::init(const char* port) {
+  bool ret = false;
 
+  if (port) {
+    this->port = port;
+    ret = tryBind(port);
+  } else {
+    bool ret = false;
+    for (int p = PORT_START; p <= PORT_END && !ret; ++p) {
+      this->port = std::to_string(p);
+      ret = tryBind(this->port.c_str());
+    }
+  }
+
+  if (!ret)
+    throw std::string("connection impossible");
+
+  if (listen(sockfd, BACKLOG) == -1)
+    throw std::string("listen");
+
+  gameState.initTreasures();
+
+  running = true;
+}
+
+bool ServerThread::tryBind(const char* port) {
   struct addrinfo hints;
   struct addrinfo *result, *rp;
 
@@ -39,7 +61,7 @@ void ServerThread::init(const char* p, const char* servP) {
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
-  int s = getaddrinfo(NULL, port.c_str(), &hints, &result);
+  int s = getaddrinfo(NULL, port, &hints, &result);
   if (s != 0)
     throw std::string("getaddrinfo: ", gai_strerror(s));
 
@@ -57,17 +79,9 @@ void ServerThread::init(const char* p, const char* servP) {
     close(sockfd);
   }
 
-  if (rp == NULL)
-    throw std::string("Couldn't open connection.");
-
   freeaddrinfo(result);
 
-  if (listen(sockfd, BACKLOG) == -1)
-    throw std::string("listen");
-
-  gameState.initTreasures();
-
-  running = true;
+  return rp;
 }
 
 void ServerThread::acceptClients() {
@@ -151,31 +165,5 @@ void ServerThread::loop() {
       //remove closed sockets from fds
       fds.erase(std::remove_if(fds.begin(), fds.end(), [=](struct pollfd pfd){ return pms.find(pfd.fd) == pms.end(); }), fds.end());
     }
-  }
-}
-
-void ServerThread::chooseBackup(){
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::minstd_rand generator(seed);
-  std::uniform_int_distribution<unsigned int> distribution(0, fds.size()-1);
-  std::string ip;
-  unsigned int i = distribution(generator);
-  PlayerManager* pm = pms[fds[i].fd];
-  if(fds.size()>1){
-    while(pm->getPlayerId()!= clientId && !pm->sendBackup(servPort)){
-      i = distribution(generator);
-      pm = pms[fds[i].fd];
-    }
-    ip = pm->getIpAddr();
-    for(unsigned int j=0; j<fds.size(); j++){
-      if(j!=i){
-        pms[fds[j].fd]->sendBackupIp(ip, port);
-      }
-    }
-  }else{
-    //To be modified
-    running = false;
-    std::cerr << "Only one player!" << std::endl;
-    return;
   }
 }

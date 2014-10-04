@@ -25,15 +25,15 @@ ClientThread::~ClientThread() {
   delete st;
 }
 
-void ClientThread::initClientServer(int N, int M, const char* port, const char* servPort){
+void ClientThread::initClientServer(int N, int M, const char* port) {
   st = new ServerThread(N, M, *this);
-  st->init(port,servPort);
+  st->init(port);
   st->acceptClients();
   move(-1);
   st->wait();
 }
 
-void ClientThread::initClient(const char* host, const char* port){
+void ClientThread::initClient(const char* host, const char* port) {
   init(host, port);
   serv->wait();
 }
