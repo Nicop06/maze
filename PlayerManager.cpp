@@ -22,12 +22,17 @@ PlayerManager::~PlayerManager() {
 }
 
 void PlayerManager::init(int playerId) {
+  joined = playerId == -1;
+
   if (playerId >= 0)
     player = gameState.addPlayer(playerId);
 
   if (!running && (player || playerId == -1)) {
     running = true;
-    std::cout << "Connection with client " << player->id() << std::endl;
+
+    if (player)
+      std::cout << "Connection with client " << player->id() << std::endl;
+
     msg_thread = std::thread(&PlayerManager::processMessage, this);
   } else {
     throw std::string("Cannot create player");
@@ -151,15 +156,14 @@ void PlayerManager::sendState(uint32_t head, bool send_size) {
   msg.append((char*) &head, 4);
 
   const std::string state = gameState.getState();
-  uint32_t size = htonl(state.size());
+  uint32_t size = htonl(state.size() + (send_size ? 4 : 0));
+  msg.append((char*) &size, 4);
 
   if (send_size) {
     int N = htonl(gameState.getSize());
     msg.append((char*) &N, 4);
-    size += 4;
   }
 
-  msg.append((char*) &size, 4);
   msg += state;
 
   sendMsg(msg);

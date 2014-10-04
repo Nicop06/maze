@@ -207,7 +207,8 @@ void ClientThread::moveDone() {
 }
 
 void ClientThread::update(const char* state, const uint32_t size) {
-  view->update(state, size);
+  if (initialized)
+    view->update(state, size);
 }
 
 void ClientThread::initView(int id, int N) {

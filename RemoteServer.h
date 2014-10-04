@@ -32,7 +32,7 @@ class RemoteServer {
     void loop();
     void createServer(int N, const char* state, uint32_t size);
     bool sendServer(const std::string& host);
-    bool sendMsg(const std::string& msg);
+    bool sendMsg(const std::string& msg, bool eos = true);
     bool playerMoved();
     const std::string getHost() const;
 };

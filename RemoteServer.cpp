@@ -161,7 +161,6 @@ bool RemoteServer::sendServer(const std::string& port) {
 
   msg += '\0';
   msg += port;
-  msg += '\0';
 
   return sendMsg(msg);
 }
@@ -176,7 +175,7 @@ bool RemoteServer::movePlayer(int id, char dir) {
   msg.append((char*) &n_id, 4);
   msg += dir;
 
-  return sendMsg(msg);
+  return sendMsg(msg, false);
 }
 
 bool RemoteServer::playerMoved() {
@@ -186,11 +185,11 @@ bool RemoteServer::playerMoved() {
   msg.append((char*) &head, 4);
   msg.append((char*) &size, 4);
 
-  return sendMsg(msg);
+  return sendMsg(msg, false);
 }
 
-bool RemoteServer::sendMsg(const std::string& msg) {
-  if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) {
+bool RemoteServer::sendMsg(const std::string& msg, bool eos) {
+  if (send(sockfd, msg.c_str(), msg.size() + (eos ? 1 : 0), 0) == -1) {
     exit();
     return false;
   }
