@@ -21,10 +21,8 @@ ServerThread::~ServerThread() {
   if (loop_th.joinable())
     loop_th.join();
 
-  for (const auto& pair: pms) {
-    PlayerManager* pm = pair.second;
-    delete pm;
-  }
+  for (const auto& pair: pms)
+    delete pair.second;
 }
 
 void ServerThread::init(const char* port) {
