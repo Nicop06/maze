@@ -88,10 +88,9 @@ void ClientThread::delServer(RemoteServer* serv) {
 
 void ClientThread::delSrv(RemoteServer* serv) {
   auto it = servers.find(serv);
-  if (it != servers.end()) {
-    servers.erase(it);
+
+  if (it != servers.end())
     old_servers.insert(serv);
-  }
 
   cv_loop.notify_one();
 }
@@ -99,9 +98,11 @@ void ClientThread::delSrv(RemoteServer* serv) {
 void ClientThread::cleanServers() {
   std::lock_guard<std::mutex> lck(servers_mtx);
   for (RemoteServer* serv: old_servers) {
-    old_servers.erase(serv);
+    servers.erase(serv);
     delete serv;
   }
+
+  old_servers.clear();
 }
 
 const ServerThread* ClientThread::startServer(int N, const char* state, uint32_t size) {

@@ -180,10 +180,8 @@ std::string GameState::getState() {
   for (Treasure* treasure: treasures)
     state += treasure->getState();
 
-  for (const auto& pair: players) {
-    Player* player = pair.second;
-    state += player->getState();
-  }
+  for (const auto& pair: players)
+    state += pair.second->getState();
 
   return state;
 }

@@ -30,7 +30,7 @@ void RemoteServer::init(const char* host, const char* port) {
 
   int s = getaddrinfo(host, port, &hints, &result);
   if (s != 0)
-    throw std::string("getaddrinfo: ", gai_strerror(s));
+    throw std::string(gai_strerror(s));
 
   // Try to connect to the list of addresses returned by getaddrinfo()
 
@@ -100,9 +100,12 @@ void RemoteServer::loop() {
           createServer(ntohl(data[0]), buffer.data() + 12, size - 4);
           break;
         case NEW_SERVER:
-          uint32_t host_pos = buffer.find('\0', 8);
-          uint32_t port_pos = buffer.find('\0', host_pos + 1);
-          newServer(buffer.data() + host_pos, buffer.data() + port_pos);
+          {
+            uint32_t host_pos = buffer.find('\0', 8);
+            uint32_t port_pos = buffer.find('\0', host_pos + 1);
+            newServer(buffer.data() + host_pos, buffer.data() + port_pos);
+          }
+          break;
         case MOVE_PLAYER:
           ct.movePlayer(ntohl(data[0]), buffer[12]);
           if (!playerMoved())
