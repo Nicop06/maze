@@ -6,14 +6,14 @@
 
 #include <string>
 #include <iostream>
-#include <thread>
 
 #include "ClientThread.h"
 #include "ServerThread.h"
 #include "RemoteServer.h"
 #include "ClientViewNcurses.h"
+#include "GameState.h"
 
-ClientThread::ClientThread() : st(NULL), id(-1), running(false) {
+ClientThread::ClientThread() : st(NULL), serv(NULL), id(-1), pGameState(NULL), player(NULL), running(false) {
   view = new ClientViewNcurses(*this);
 }
 
@@ -25,16 +25,11 @@ ClientThread::~ClientThread() {
 }
 
 void ClientThread::initClientServer(int N, int M, const char* port, const char* servPort){
-  st = new ServerThread(N,M, *this);
-  std::thread acceptClient;
-
+  st = new ServerThread(N, M, *this);
   st->init(port,servPort);
-  acceptClient = std::thread(&ServerThread::acceptClients, st);
-  init("localhost",port);
-
-  acceptClient.join();//clients are now all accepted by the server
-  serv->wait();
-  std::cout << "End wait\n";
+  st->acceptClients();
+  move(-1);
+  st->wait();
 }
 
 void ClientThread::initClient(const char* host, const char* port){
@@ -58,7 +53,13 @@ void ClientThread::exit() {
 }
 
 void ClientThread::move(char dir) {
-  serv->move(dir);
+  if (player) {
+    player->move(dir);
+    const std::string state = pGameState->getState();
+    update(state.data(), state.size());
+  } else if (serv) {
+    serv->move(dir);
+  }
 }
 
 void ClientThread::update(const char* state, const uint32_t size) {
@@ -68,4 +69,14 @@ void ClientThread::update(const char* state, const uint32_t size) {
 void ClientThread::initView(int id, int N) {
   this->id = id;
   view->init(id, N);
+
+  if (pGameState && !player)
+    this->player = pGameState->addPlayer(id);
+}
+
+void ClientThread::setState(GameState* gameState) {
+  pGameState = gameState;
+
+  if (pGameState)
+    this->player = pGameState->getPlayer(id);
 }

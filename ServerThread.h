@@ -20,6 +20,8 @@ class ServerThread {
     void init(const char* port = PORT, const char* servPort = SERV_PORT);
     void acceptClients();
 
+    void wait() { if (loop_th.joinable()) loop_th.join(); }
+
   private:
     int sockfd;
     int otherSockfd; //socket to the other server

@@ -11,6 +11,8 @@
 
 class ServerThread;
 class RemoteServer;
+class GameState;
+class Player;
 
 class ClientThread {
   public:
@@ -24,12 +26,16 @@ class ClientThread {
     void move(char dir);
     void update(const char* state, uint32_t size);
     void initView(int id, int N);
+    void setState(GameState* gameState);
 
   private:
     ClientView* view;
     ServerThread* st;
     RemoteServer* serv;
     int id;
+
+    GameState* pGameState;
+    Player* player;
 
     std::atomic<bool> running;
 

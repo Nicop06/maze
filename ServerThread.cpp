@@ -12,6 +12,7 @@
 #include "ServerThread.h"
 
 ServerThread::ServerThread(int N, int M, ClientThread& client) : gameState(N, M), ct(client), running(false) {
+  ct.setState(&gameState);
 }
 
 ServerThread::~ServerThread() {
@@ -71,9 +72,7 @@ void ServerThread::init(const char* p, const char* servP) {
 
 void ServerThread::acceptClients() {
   struct pollfd pfd_listen;
-  int playerId = 0;
-
-
+  int playerId = 0, ctId = ++playerId;
 
   pfd_listen.fd = sockfd;
   pfd_listen.events = POLLIN;
@@ -111,6 +110,8 @@ void ServerThread::acceptClients() {
   //chooseBackup();
   std::cout << "Game starting..." << std::endl;
   loop_th = std::thread(&ServerThread::loop, this);
+
+  ct.initView(ctId, gameState.getSize());
 }
 
 void ServerThread::loop() {
