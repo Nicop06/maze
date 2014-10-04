@@ -42,7 +42,7 @@ void ClientThread::init(RemoteServer* serv) {
 }
 
 void ClientThread::init(ServerThread* st) {
-  if (!st) {
+  if (!this->st) {
     this->st = st;
     init();
   }
@@ -99,8 +99,8 @@ void ClientThread::delSrv(RemoteServer* serv) {
 void ClientThread::cleanServers() {
   std::lock_guard<std::mutex> lck(servers_mtx);
   for (RemoteServer* serv: old_servers) {
-    delete serv;
     old_servers.erase(serv);
+    delete serv;
   }
 }
 
