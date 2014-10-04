@@ -53,10 +53,10 @@ void RemoteServer::init(const char* host, const char* port) {
 void RemoteServer::exit() {
   if (running) {
     running = false;
-    const char msg[] = "exit";
-    const int len = sizeof(msg);
-    send(sockfd, msg, len, 0);
+    sendMsg("exit");
   }
+
+  ct.delServer(this);
 }
 
 void RemoteServer::loop() {
