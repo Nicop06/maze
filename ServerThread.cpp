@@ -10,6 +10,8 @@
 #include <cstring>
 
 #include "ServerThread.h"
+#include "PlayerManager.h"
+#include "RemoteServer.h"
 
 ServerThread::ServerThread(int N, int M, ClientThread& client) : gameState(N, M), ct(client), running(false) {
   ct.setState(&gameState);
@@ -21,11 +23,17 @@ ServerThread::~ServerThread() {
   if (loop_th.joinable())
     loop_th.join();
 
+  if (connect_th.joinable())
+    connect_th.join();
+
   for (const auto& pair: pms)
     delete pair.second;
 }
 
 void ServerThread::init(const char* port) {
+  if (running)
+    return;
+
   bool ret = false;
 
   if (port) {
@@ -96,16 +104,7 @@ void ServerThread::acceptClients() {
 
   while ((timeout == -1 || timeout > 0) && running) {
     if (poll(&pfd_listen, 1, (int) (timeout * 1000)) > 0) {
-      struct pollfd pfd;
-      pfd.fd = accept(sockfd, NULL, NULL);
-      if (pfd.fd < 0)
-        throw std::string("accept");
-      pfd.events = POLLIN;
-      fds.push_back(pfd);
-
-      PlayerManager *pm = new PlayerManager(pfd.fd, gameState);
-      pm->init(++playerId);
-      pms[pfd.fd] = pm;
+      acceptClient(++playerId);
 
       if (timeout == -1) {
         timeout = 0;
@@ -119,10 +118,45 @@ void ServerThread::acceptClients() {
   }
 
   close(sockfd);
-  //chooseBackup();
   std::cout << "Game starting..." << std::endl;
   ct.initView(ctId, gameState.getSize());
   loop_th = std::thread(&ServerThread::loop, this);
+}
+
+void ServerThread::connectClients() {
+  connect_th = std::thread(&ServerThread::connectClientsLoop, this);
+  loop_th = std::thread(&ServerThread::loop, this);
+}
+
+void ServerThread::connectClientsLoop() {
+  uint32_t nb_players;
+  struct pollfd pfd_listen;
+
+  pfd_listen.fd = sockfd;
+  pfd_listen.events = POLLIN;
+
+  do {
+    if (poll(&pfd_listen, 1, 100) > 0) {
+      acceptClient(-1);
+    }
+
+    nb_players = std::max(gameState.getNbPlayers() - 1, 0);
+  } while (running && pms.size() < nb_players);
+
+  close(sockfd);
+}
+
+void ServerThread::acceptClient(int id) {
+  struct pollfd pfd;
+  pfd.fd = accept(sockfd, NULL, NULL);
+  if (pfd.fd < 0)
+    throw std::string("accept");
+  pfd.events = POLLIN;
+  fds.push_back(pfd);
+
+  PlayerManager *pm = new PlayerManager(pfd.fd, gameState, *this);
+  pm->init(id);
+  pms[pfd.fd] = pm;
 }
 
 void ServerThread::loop() {
@@ -161,6 +195,54 @@ void ServerThread::loop() {
 
       //remove closed sockets from fds
       fds.erase(std::remove_if(fds.begin(), fds.end(), [=](struct pollfd pfd){ return pms.find(pfd.fd) == pms.end(); }), fds.end());
+    }
+  }
+}
+
+bool ServerThread::createServer() {
+  bool success = false;
+
+  for (const auto& pair: pms) {
+    std::unique_lock<std::mutex> lck(new_srv_mtx);
+    new_srv_status = STATUS_WAIT;
+    pair.second->createServer();
+    while (new_srv_status == STATUS_WAIT)
+      cv_new_srv.wait_for(lck, std::chrono::seconds(LOCK_TIMEOUT));
+
+    if (new_srv_status == STATUS_DONE) {
+      success = true;
+      break;
+    }
+  }
+
+  return success;
+}
+
+void ServerThread::newServer(const PlayerManager* pm, const std::string& host, const std::string& port) {
+  bool success = false;
+
+  if (host.size() > 0 && port.size() > 0) {
+    std::lock_guard<std::mutex> lck(new_srv_mtx);
+    RemoteServer* serv = new RemoteServer(ct);
+    try {
+      serv->init(host.c_str(), port.c_str());
+      new_srv_status = STATUS_DONE;
+      ct.addServer(serv);
+      success = true;
+    } catch (std::string& e) {
+      new_srv_status = STATUS_FAIL;
+    }
+  } else {
+    std::lock_guard<std::mutex> lck(new_srv_mtx);
+    new_srv_status = STATUS_FAIL;
+  }
+
+  cv_new_srv.notify_one();
+
+  if (success) {
+    for (const auto& pair: pms) {
+      if (pair.second != pm)
+        pair.second->sendServer(host, port);
     }
   }
 }

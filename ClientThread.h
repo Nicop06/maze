@@ -26,6 +26,7 @@ class ClientThread {
 
     void addServer(RemoteServer* serv, bool join = false);
     void delServer(RemoteServer* serv);
+    const ServerThread* startServer(int N, const char* state, uint32_t size);
 
     // Actions
     void move(char dir);
@@ -49,6 +50,7 @@ class ClientThread {
     std::mutex cv_mtx;
 
     void init();
+    void createBackups();
 };
 
 #endif

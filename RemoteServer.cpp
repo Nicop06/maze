@@ -7,6 +7,7 @@
 #include <string>
 
 #include "RemoteServer.h"
+#include "ServerThread.h"
 
 RemoteServer::~RemoteServer() {
   exit();
@@ -18,6 +19,9 @@ RemoteServer::~RemoteServer() {
 }
 
 void RemoteServer::init(const char* host, const char* port) {
+  if (running)
+    return;
+
   struct addrinfo hints, *result, *rp;
 
   memset(&hints, 0, sizeof(struct addrinfo));
@@ -93,6 +97,10 @@ void RemoteServer::loop() {
         case UPDATE_STATE:
           ct.update(buffer.data() + 8, size);
           break;
+        case CREATE_SERVER:
+          const ServerThread* st = ct.startServer(data[0], buffer.data() + 12, size - 4);
+          sendServer(st->getPort());
+          break;
       }
 
       buffer.erase(0, size + 8);
@@ -131,6 +139,16 @@ bool RemoteServer::connectSrv(int id) {
   return sendMsg(msg);
 }
 
+void RemoteServer::sendServer(const std::string& port) {
+  std::string msg = "server";
+  msg += '\0';
+  msg += getHost();
+  msg += '\0';
+  msg += port;
+
+  sendMsg(msg);
+}
+
 bool RemoteServer::sendMsg(const std::string& msg) {
   if (send(sockfd, msg.c_str(), msg.size() + 1, 0) == -1) {
     exit();
@@ -138,4 +156,23 @@ bool RemoteServer::sendMsg(const std::string& msg) {
   }
 
   return true;
+}
+
+const std::string RemoteServer::getHost() const {
+  char host[INET6_ADDRSTRLEN];
+  struct sockaddr_storage addr;
+  socklen_t len = sizeof(addr);
+
+  getpeername(sockfd, (struct sockaddr*)&addr, &len);
+
+  // deal with both IPv4 and IPv6:
+  if (addr.ss_family == AF_INET) {
+    struct sockaddr_in *s = (struct sockaddr_in *) &addr;
+    inet_ntop(AF_INET, &s->sin_addr, host, sizeof(host));
+  } else { // AF_INET6
+    struct sockaddr_in6 *s = (struct sockaddr_in6 *) &addr;
+    inet_ntop(AF_INET6, &s->sin6_addr, host, sizeof(host));
+  }
+
+  return host;
 }

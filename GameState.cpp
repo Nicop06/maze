@@ -42,6 +42,7 @@ void GameState::initState(const char* state, uint32_t size) {
   const int* max_data;
 
   T = ntohl(*data);
+  M = T;
   P = ntohl(*(data + 1));
 
   const uint32_t exp_size = 8 * T + 16 * P + 8;

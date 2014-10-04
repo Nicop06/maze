@@ -32,6 +32,7 @@ class GameState {
 
     std::string getState();
     int getSize() const { return N; }
+    int getNbPlayers() const { return P; }
 
   private:
     std::mutex state_mutex;

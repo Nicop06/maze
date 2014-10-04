@@ -3,14 +3,16 @@
 
 #include "GameState.h"
 #include "ClientThread.h"
-#include "PlayerManager.h"
 #include "config.h"
 
+#include <mutex>
 #include <atomic>
 #include <thread>
 #include <vector>
 #include <map>
 #include <poll.h>
+
+class PlayerManager;
 
 class ServerThread {
   public:
@@ -19,8 +21,12 @@ class ServerThread {
 
     void init(const char* port = NULL);
     void acceptClients();
+    void connectClients();
 
-    void wait() { if (loop_th.joinable()) loop_th.join(); }
+    bool createServer();
+    void newServer(const PlayerManager* pm, const std::string& host, const std::string& port);
+
+    const std::string& getPort() const { return port; }
 
   private:
     std::string port;
@@ -32,11 +38,18 @@ class ServerThread {
     ClientThread& ct;
     std::map<int, PlayerManager*> pms; //sockfd to playerManager
 
+    std::thread connect_th;
     std::thread loop_th;
     std::atomic<bool> running;
 
+    std::atomic<char> new_srv_status;
+    std::condition_variable cv_new_srv;
+    std::mutex new_srv_mtx;
+
     void loop();
     bool tryBind(const char* port);
+    void acceptClient(int id);
+    void connectClientsLoop();
 };
 
 #endif

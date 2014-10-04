@@ -12,6 +12,7 @@
 #include "RemoteServer.h"
 #include "ClientViewNcurses.h"
 #include "GameState.h"
+#include "Player.h"
 
 ClientThread::ClientThread() : st(NULL), servers(2), id(-1), initialized(false),
 pGameState(NULL), player(NULL), running(false) {
@@ -28,13 +29,17 @@ ClientThread::~ClientThread() {
 }
 
 void ClientThread::init(RemoteServer* serv) {
-  addServer(serv, true);
-  init();
+  if (servers.size() == 0) {
+    addServer(serv, true);
+    init();
+  }
 }
 
 void ClientThread::init(ServerThread* st) {
-  this->st = st;
-  init();
+  if (!st) {
+    this->st = st;
+    init();
+  }
 }
 
 void ClientThread::init() {
@@ -43,6 +48,8 @@ void ClientThread::init() {
 }
 
 void ClientThread::loop() {
+  createBackups();
+
   std::unique_lock<std::mutex> lck(cv_mtx);
   while (running) cv.wait(lck);
 }
@@ -63,6 +70,36 @@ void ClientThread::delServer(RemoteServer* serv) {
   if (it != servers.end()) {
     servers.erase(it);
     delete serv;
+  }
+
+  createBackups();
+}
+
+const ServerThread* ClientThread::startServer(int N, const char* state, uint32_t size) {
+  if (st) {
+    try {
+      st = new ServerThread(N, 0, *this);
+      if (pGameState)
+        pGameState->initState(state, size);
+      st->init(NULL);
+      st->connectClients();
+      return st;
+    } catch (const std::string& e) {
+    }
+  }
+
+  return NULL;
+}
+
+void ClientThread::createBackups() {
+  if (!st)
+    return;
+
+  while (servers.size() < NB_BACKUP) {
+    if (!st->createServer()) {
+      std::cerr << "Failed to create backup servers\n";
+      exit();
+    }
   }
 }
 

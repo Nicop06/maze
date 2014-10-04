@@ -20,8 +20,6 @@ class RemoteServer {
     bool join();
     bool connectSrv(int id);
 
-    void wait() { if(loop_th.joinable()) loop_th.join(); }
-
   private:
     ClientThread& ct;
 
@@ -31,7 +29,9 @@ class RemoteServer {
     int sockfd;
 
     void loop();
+    void sendServer(const std::string& host);
     bool sendMsg(const std::string& msg);
+    const std::string getHost() const;
 };
 
 #endif

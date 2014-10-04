@@ -6,9 +6,10 @@
 #include <unistd.h>
 #include <algorithm>
 #include <iostream>
+#include <cstring>
 
-PlayerManager::PlayerManager(int sockfd, GameState& gameState)
-  : sockfd(sockfd), joined(false), gameState(gameState), player(NULL), nb_msg(0), running(false) {
+PlayerManager::PlayerManager(int sockfd, GameState& gameState, ServerThread& st)
+  : sockfd(sockfd), joined(false), gameState(gameState), st(st), player(NULL), nb_msg(0), running(false) {
 }
 
 PlayerManager::~PlayerManager() {
@@ -21,9 +22,10 @@ PlayerManager::~PlayerManager() {
 }
 
 void PlayerManager::init(int playerId) {
-  player = gameState.addPlayer(playerId);
+  if (playerId >= 0)
+    player = gameState.addPlayer(playerId);
 
-  if (player) {
+  if (!running && (player || playerId == -1)) {
     running = true;
     std::cout << "Connection with client " << player->id() << std::endl;
     msg_thread = std::thread(&PlayerManager::processMessage, this);
@@ -36,7 +38,9 @@ void PlayerManager::stop() {
   if (running) {
     running = false;
     cv.notify_one();
-    std::cout << "Closing connection with client " << player->id() << std::endl;
+
+    if (player)
+      std::cout << "Closing connection with client " << player->id() << std::endl;
   }
 }
 
@@ -92,6 +96,17 @@ void PlayerManager::processMessage() {
         player = gameState.getPlayer(ntohl(*id));
         pos = old_pos + 12;
         nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
+      } else if (cmd.compare(0, 6, "server") && nb_msg >= 3) {
+        std::string host, port;
+        old_pos = pos + 1;
+        pos = tmp.find('\0', old_pos);
+        host = cmd.substr(old_pos, pos - old_pos);
+
+        old_pos = pos + 1;
+        pos = tmp.find('\0', old_pos);
+        port = cmd.substr(old_pos, pos - old_pos);
+
+        st.newServer(this, host, port);
       }
 
       nb_msg--;
@@ -105,6 +120,7 @@ void PlayerManager::processMessage() {
 }
 
 void PlayerManager::join() {
+  std::string msg;
   int id = htonl(player->id());
   int N = htonl(gameState.getSize());
   uint32_t size = htonl(8);
@@ -115,29 +131,57 @@ void PlayerManager::join() {
   msg.append((char*) &id, 4);
   msg.append((char*) &N, 4);
 
-  sendMsg();
+  sendMsg(msg);
 }
 
 void PlayerManager::move(const std::string& cmd) {
+  std::string msg;
   if (cmd != "NoMove")
     player->move(cmd[0]);
 
-  uint32_t head = htonl(UPDATE_STATE);
+  sendState(htonl(UPDATE_STATE));
+}
+
+void PlayerManager::createServer() {
+  sendState(htonl(CREATE_SERVER), true);
+}
+
+void PlayerManager::sendState(uint32_t head, bool send_size) {
+  std::string msg;
   msg.append((char*) &head, 4);
 
   const std::string state = gameState.getState();
   uint32_t size = htonl(state.size());
+
+  if (send_size) {
+    int N = htonl(gameState.getSize());
+    msg.append((char*) &N, 4);
+    size += 4;
+  }
+
   msg.append((char*) &size, 4);
   msg += state;
 
-  sendMsg();
+  sendMsg(msg);
 }
 
-void PlayerManager::sendMsg() {
+void PlayerManager::sendServer(const std::string& host, const std::string& port) {
+  std::string msg;
+  uint32_t head = htonl(NEW_SERVER);
+  uint32_t size = htonl(host.size() + port.size() + 1);
+  msg.append((char*) &head, 4);
+  msg.append((char*) &size, 4);
+  msg += host;
+  msg += '\0';
+  msg += port;
+
+  sendMsg(msg);
+}
+
+void PlayerManager::sendMsg(const std::string& msg) {
   if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
-    std::cerr << "Error while sending the state to client " << player->id() << std::endl;
+    if (player)
+      std::cerr << "Error while sending message to client " << player->id() << std::endl;
     stop();
   }
-
-  msg.clear();
 }
