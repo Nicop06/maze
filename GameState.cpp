@@ -17,15 +17,13 @@ GameState::GameState(int N, int M) : N(N), M(M), T(0), P(0), treasures(M) {
 
 GameState::~GameState() {
   std::lock_guard<std::mutex> lck(state_mutex);
-  for (Treasure* treasure: treasures)
+  for (const Treasure* treasure: treasures)
     delete treasure;
 
   treasures.clear();
 
-  for (const auto& pair: players) {
-    Player* player = pair.second;
-    delete player;
-  }
+  for (const auto& pair: players)
+    delete pair.second;
 
   players.clear();
 
