@@ -14,8 +14,10 @@ ClientViewNcurses::~ClientViewNcurses() {
   if (running) {
     running = false;
     nodelay(stdscr, TRUE);
-    loop_th.join();
   }
+
+  if (loop_th.joinable())
+    loop_th.join();
 
   endwin();
 }
