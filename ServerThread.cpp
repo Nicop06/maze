@@ -123,9 +123,8 @@ void ServerThread::acceptClients() {
   close(sockfd);
   //chooseBackup();
   std::cout << "Game starting..." << std::endl;
-  loop_th = std::thread(&ServerThread::loop, this);
-
   ct.initView(ctId, gameState.getSize());
+  loop_th = std::thread(&ServerThread::loop, this);
 }
 
 void ServerThread::loop() {
