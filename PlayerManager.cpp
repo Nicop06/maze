@@ -56,11 +56,9 @@ void PlayerManager::addMessage(const std::string& msg) {
 
 void PlayerManager::processMessage() {
   size_t pos, old_pos;
-  uint32_t size, head;
-  std::string tmp, cmd, msg;
+  std::string tmp, cmd;
 
   while (running) {
-    msg.clear();
     std::unique_lock<std::mutex> lck(msg_mx);
     while (nb_msg <= 0 && running) cv.wait(lck);
     tmp.swap(buffer);
@@ -84,34 +82,10 @@ void PlayerManager::processMessage() {
 
       if (player) {
         if (cmd == "join" && !joined) {
-          int id = htonl(player->id());
-          int N = htonl(gameState.getSize());
-          size = htonl(8);
-
-          head = htonl(INIT);
-          msg.append((char*) &head, 4);
-          msg.append((char*) &size, 4);
-          msg.append((char*) &id, 4);
-          msg.append((char*) &N, 4);
+          join();
           joined = true;
-
         } else if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W" || cmd == "NoMove") {
-          if (cmd != "NoMove")
-            player->move(cmd[0]);
-
-          head = htonl(STATE);
-          msg.append((char*) &head, 4);
-
-          const std::string state = gameState.getState();
-          size = htonl(state.size());
-          msg.append((char*) &size, 4);
-          msg += state;
-
-          if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
-            std::cerr << "Error while sending the state to client " << player->id() << std::endl;
-            stop();
-            return;
-          }
+          move(cmd);
         }
       } else if (joined && cmd.compare(0, 7, "connect") && tmp.length() > old_pos + 12 && tmp[old_pos + 12] == '\0') {
         int* id = (int*)(tmp.data() + old_pos + 7);
@@ -130,59 +104,40 @@ void PlayerManager::processMessage() {
   }
 }
 
-bool PlayerManager::sendBackup(std::string port){
-  std::string msg;
-  int head_backup = htonl(BACKUP);
-  int portSize = htonl(port.size());
-  msg.append((char*) &head_backup, sizeof(int));
-  msg.append((char*) &portSize, sizeof(int));
-  msg += port;
+void PlayerManager::join() {
+  int id = htonl(player->id());
+  int N = htonl(gameState.getSize());
+  uint32_t size = htonl(8);
+  uint32_t head = htonl(INIT);
+
+  msg.append((char*) &head, 4);
+  msg.append((char*) &size, 4);
+  msg.append((char*) &id, 4);
+  msg.append((char*) &N, 4);
+
+  sendMsg();
+}
+
+void PlayerManager::move(const std::string& cmd) {
+  if (cmd != "NoMove")
+    player->move(cmd[0]);
+
+  uint32_t head = htonl(STATE);
+  msg.append((char*) &head, 4);
+
+  const std::string state = gameState.getState();
+  uint32_t size = htonl(state.size());
+  msg.append((char*) &size, 4);
+  msg += state;
+
+  sendMsg();
+}
+
+void PlayerManager::sendMsg() {
   if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
-    std::cerr << "Error while sending backup message to client " << player->id() << std::endl;
-    stop();
-    return false;
-  }
-  return true;
-}
-
-void PlayerManager::sendBackupIp(std::string ip, std::string port){
-  std::string msg;
-  int head_backIp = htonl(BACK_IP);
-  int portSize = htonl(port.size());
-  int ipSize = htonl(ip.size());
-  msg.append((char*) &head_backIp, sizeof(int));
-  msg.append((char*) &ipSize, sizeof(int));
-  msg.append((char*) &portSize, sizeof(int));
-  msg += ip;
-  msg += port;
-  if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
-    std::cerr << "Error while sending backup ip to client " << player->id() << std::endl;
+    std::cerr << "Error while sending the state to client " << player->id() << std::endl;
     stop();
   }
-}
 
-std::string PlayerManager::getIpAddr(){
-  socklen_t len;
-  struct sockaddr_storage addr;
-  char ipstr[INET6_ADDRSTRLEN];
-  //int p;
-
-  len = sizeof addr;
-  getpeername(sockfd, (struct sockaddr*)&addr, &len);
-
-  // deal with both IPv4 and IPv6:
-  if (addr.ss_family == AF_INET) {
-    struct sockaddr_in *s = (struct sockaddr_in *)&addr;
-    //p = ntohs(s->sin_port);
-    inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof ipstr);
-  } else { // AF_INET6
-    struct sockaddr_in6 *s = (struct sockaddr_in6 *)&addr;
-    //p = ntohs(s->sin6_port);
-    inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof ipstr);
-  }
-  return std::string(ipstr);
-}
-
-int PlayerManager::getPlayerId() const{
-  return player->id();
+  msg.clear();
 }

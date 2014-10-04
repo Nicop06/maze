@@ -20,10 +20,6 @@ class PlayerManager
     void start();
     void stop();
     void addMessage(const std::string& msg);
-    void sendBackupIp(std::string ip, std::string port);
-    bool sendBackup(std::string port);
-    std::string getIpAddr();
-    int getPlayerId() const;
 
   private:
     int sockfd;
@@ -31,6 +27,7 @@ class PlayerManager
     GameState& gameState;
     Player* player;
     std::string buffer;
+    std::string msg;
 
     std::thread msg_thread;
     std::mutex msg_mx;
@@ -40,6 +37,9 @@ class PlayerManager
     std::atomic<bool> running;
 
     void processMessage();
+    void join();
+    void move(const std::string& cmd);
+    void sendMsg();
 };
 
 #endif
