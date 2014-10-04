@@ -101,15 +101,20 @@ void PlayerManager::processMessage() {
         player = gameState.getPlayer(ntohl(*id));
         pos = old_pos + 12;
         nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
-      } else if (cmd.compare(0, 6, "server") && nb_msg >= 3) {
+      }
+
+      if (cmd == "server") {
+        if (nb_msg < 3)
+          continue;
+
         std::string host, port;
         old_pos = pos + 1;
         pos = tmp.find('\0', old_pos);
-        host = cmd.substr(old_pos, pos - old_pos);
+        host = tmp.substr(old_pos, pos - old_pos);
 
         old_pos = pos + 1;
         pos = tmp.find('\0', old_pos);
-        port = cmd.substr(old_pos, pos - old_pos);
+        port = tmp.substr(old_pos, pos - old_pos);
 
         st.newServer(this, host, port);
       }
@@ -172,12 +177,13 @@ void PlayerManager::sendState(uint32_t head, bool send_size) {
 void PlayerManager::sendServer(const std::string& host, const std::string& port) {
   std::string msg;
   uint32_t head = htonl(NEW_SERVER);
-  uint32_t size = htonl(host.size() + port.size() + 1);
+  uint32_t size = htonl(host.size() + port.size() + 2);
   msg.append((char*) &head, 4);
   msg.append((char*) &size, 4);
   msg += host;
   msg += '\0';
   msg += port;
+  msg += '\0';
 
   sendMsg(msg);
 }

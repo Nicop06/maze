@@ -99,6 +99,10 @@ void RemoteServer::loop() {
         case CREATE_SERVER:
           createServer(ntohl(data[0]), buffer.data() + 12, size - 4);
           break;
+        case NEW_SERVER:
+          uint32_t host_pos = buffer.find('\0', 8);
+          uint32_t port_pos = buffer.find('\0', host_pos + 1);
+          newServer(buffer.data() + host_pos, buffer.data() + port_pos);
         case MOVE_PLAYER:
           ct.movePlayer(ntohl(data[0]), buffer[12]);
           if (!playerMoved())
@@ -163,6 +167,14 @@ bool RemoteServer::sendServer(const std::string& port) {
   msg += port;
 
   return sendMsg(msg);
+}
+
+void RemoteServer::newServer(const char* host, const char* port) {
+  RemoteServer* serv = new RemoteServer(ct);
+  if (serv) {
+    serv->init(host, port);
+    ct.addServer(serv);
+  }
 }
 
 bool RemoteServer::movePlayer(int id, char dir) {

@@ -105,7 +105,7 @@ void ClientThread::cleanServers() {
 }
 
 const ServerThread* ClientThread::startServer(int N, const char* state, uint32_t size) {
-  if (st) {
+  if (!st) {
     try {
       st = new ServerThread(N, 0, *this);
       if (pGameState)
@@ -114,6 +114,7 @@ const ServerThread* ClientThread::startServer(int N, const char* state, uint32_t
       st->connectClients();
       return st;
     } catch (const std::string& e) {
+      std::cerr << "Error: " << e << std::endl;
     }
   }
 

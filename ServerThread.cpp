@@ -40,7 +40,6 @@ void ServerThread::init(const char* port) {
     this->port = port;
     ret = tryBind(port);
   } else {
-    bool ret = false;
     for (int p = PORT_START; p <= PORT_END && !ret; ++p) {
       this->port = std::to_string(p);
       ret = tryBind(this->port.c_str());
