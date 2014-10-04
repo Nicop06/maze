@@ -43,7 +43,7 @@ class ServerThread {
     std::thread loop_th;
     std::atomic<bool> running;
 
-    std::atomic<char> new_srv_status;
+    std::atomic<bool> new_srv_created;
     std::condition_variable cv_new_srv;
     std::mutex new_srv_mtx;
 

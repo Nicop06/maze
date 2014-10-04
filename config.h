@@ -22,8 +22,4 @@
 #define MOVE_PLAYER     -5
 #define PLAYER_MOVED    -6
 
-#define STATUS_WAIT 0
-#define STATUS_FAIL 1
-#define STATUS_DONE 2
-
 #endif

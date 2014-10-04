@@ -199,46 +199,41 @@ void ServerThread::loop() {
 }
 
 bool ServerThread::createServer() {
-  bool success = false;
+  std::unique_lock<std::mutex> lck(new_srv_mtx);
 
   for (const auto& pair: pms) {
-    std::unique_lock<std::mutex> lck(new_srv_mtx);
-    new_srv_status = STATUS_WAIT;
+    new_srv_created = false;
     pair.second->createServer();
-    while (new_srv_status == STATUS_WAIT)
-      cv_new_srv.wait_for(lck, std::chrono::seconds(LOCK_TIMEOUT));
+    cv_new_srv.wait_for(lck, std::chrono::seconds(LOCK_TIMEOUT));
 
-    if (new_srv_status == STATUS_DONE) {
-      success = true;
+    if (new_srv_created)
       break;
-    }
   }
 
-  return success;
+  return new_srv_created;
 }
 
 void ServerThread::newServer(const PlayerManager* pm, const std::string& host, const std::string& port) {
-  bool success = false;
+  std::unique_lock<std::mutex> lck(new_srv_mtx);
+  if (new_srv_created)
+    return;
+
+  new_srv_created = false;
 
   if (host.size() > 0 && port.size() > 0) {
-    std::lock_guard<std::mutex> lck(new_srv_mtx);
     RemoteServer* serv = new RemoteServer(ct);
     try {
       serv->init(host.c_str(), port.c_str());
-      new_srv_status = STATUS_DONE;
       ct.addServer(serv);
-      success = true;
+      new_srv_created = true;
     } catch (std::string& e) {
-      new_srv_status = STATUS_FAIL;
     }
-  } else {
-    std::lock_guard<std::mutex> lck(new_srv_mtx);
-    new_srv_status = STATUS_FAIL;
   }
 
   cv_new_srv.notify_one();
 
-  if (success) {
+  if (new_srv_created) {
+    lck.unlock();
     for (const auto& pair: pms) {
       if (pair.second != pm)
         pair.second->sendServer(host, port);

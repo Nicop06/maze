@@ -30,8 +30,11 @@ void PlayerManager::init(int playerId) {
   if (!running && (player || playerId == -1)) {
     running = true;
 
-    if (player)
+    if (player) {
       std::cout << "Connection with client " << player->id() << std::endl;
+    } else {
+      std::cout << "Connection with existing client" << std::endl;
+    }
 
     msg_thread = std::thread(&PlayerManager::processMessage, this);
   } else {

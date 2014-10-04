@@ -144,9 +144,8 @@ void ClientThread::exit() {
     for (RemoteServer* srv: servers)
       srv->exit();
 
-    std::lock_guard<std::mutex> loop_lck(loop_mtx);
     running = false;
-    cv_loop.notify_all();
+    cv_loop.notify_one();
   }
 }
 
