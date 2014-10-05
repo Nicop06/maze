@@ -103,11 +103,7 @@ void RemoteServer::loop() {
           createServer(ntohl(data[0]), buffer.data() + 12, size - 4);
           break;
         case NEW_SERVER:
-          {
-            size_t host_pos = buffer.find('\0', 8);
-            size_t port_pos = buffer.find('\0', host_pos + 1);
-            newServer(buffer.data() + host_pos, buffer.data() + port_pos);
-          }
+          newServer(buffer.data() + 8, buffer.data() + buffer.find('\0', 8) + 1);
           break;
         case MOVE_PLAYER:
           ct.movePlayer(ntohl(data[0]), buffer[12]);
