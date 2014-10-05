@@ -123,6 +123,7 @@ bool GameState::checkBounds(int x, int y) const {
 }
 
 Player* GameState::getPlayer(int id) const {
+  std::lock_guard<std::mutex> lck(state_mutex);
   auto it = players.find(id);
   return it == players.end() ? NULL : it->second;
 }
@@ -186,3 +187,12 @@ std::string GameState::getState() {
   return state;
 }
 
+int GameState::getSize() const {
+  std::lock_guard<std::mutex> lck(state_mutex);
+  return N;
+}
+
+int getNbPlayers() const {
+  std::lock_guard<std::mutex> lck(state_mutex);
+  return P;
+}

@@ -26,13 +26,12 @@ class GameState {
     void removePlayer(int id);
 
     void updatePosition(Player* player, int new_x, int new_y, callback synchronize);
-    inline bool checkBounds(int x, int y) const;
 
     void synchronize();
 
     std::string getState();
-    int getSize() const { return N; }
-    int getNbPlayers() const { return P; }
+    int getSize() const;
+    int getNbPlayers() const;
 
   private:
     std::mutex state_mutex;
@@ -57,6 +56,8 @@ class GameState {
 
     // The players
     std::map<int, Player*> players;
+
+    inline bool checkBounds(int x, int y) const;
 };
 
 #endif
