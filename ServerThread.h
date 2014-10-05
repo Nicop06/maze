@@ -23,7 +23,7 @@ class ServerThread {
     void acceptClients();
     void connectClients();
 
-    bool createServer();
+    bool createBackupServer();
     void newServer(const PlayerManager* pm, const std::string& host, const std::string& port);
     void syncMove(Player* player, char dir);
 

@@ -212,7 +212,7 @@ void ServerThread::loop() {
   }
 }
 
-bool ServerThread::createServer() {
+bool ServerThread::createBackupServer() {
   std::unique_lock<std::mutex> lck(new_srv_mtx);
   std::unique_lock<std::mutex> pms_lck(pms_mtx);
   std::map<int, PlayerManager*> old_pms(pms);
@@ -226,7 +226,7 @@ bool ServerThread::createServer() {
     pms_lck_bis.unlock();
 
     new_srv_created = false;
-    pair.second->createServer();
+    pair.second->createBackupServer();
     cv_new_srv.wait_for(lck, std::chrono::seconds(BACKUP_TIMEOUT));
 
     if (new_srv_created)
@@ -260,7 +260,7 @@ void ServerThread::newServer(const PlayerManager* pm, const std::string& host, c
     std::lock_guard<std::mutex> lck(pms_mtx);
     for (const auto& pair: pms) {
       if (pair.second != pm)
-        pair.second->sendServer(host, port);
+        pair.second->sendNewServer(host, port);
     }
   }
 }

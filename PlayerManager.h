@@ -22,8 +22,8 @@ class PlayerManager
     void stop();
     void addMessage(const std::string& msg);
 
-    void createServer();
-    void sendServer(const std::string& host, const std::string& port);
+    void createBackupServer();
+    void sendNewServer(const std::string& host, const std::string& port);
 
   private:
     int sockfd;

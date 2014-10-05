@@ -155,7 +155,7 @@ void PlayerManager::move(const std::string& cmd) {
   sendState(htonl(UPDATE_STATE));
 }
 
-void PlayerManager::createServer() {
+void PlayerManager::createBackupServer() {
   sendState(htonl(CREATE_SERVER), true);
 }
 
@@ -177,7 +177,7 @@ void PlayerManager::sendState(uint32_t head, bool send_size) {
   sendMsg(msg);
 }
 
-void PlayerManager::sendServer(const std::string& host, const std::string& port) {
+void PlayerManager::sendNewServer(const std::string& host, const std::string& port) {
   std::string msg;
   uint32_t head = htonl(NEW_SERVER);
   uint32_t size = htonl(host.size() + port.size() + 2);

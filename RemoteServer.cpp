@@ -153,25 +153,19 @@ bool RemoteServer::connectSrv(int id) {
 
 void RemoteServer::createServer(int N, const char* state, size_t size) {
   const ServerThread* st = ct.startServer(N, state, size);
-  std::string port = st ? st->getPort() : "";
-  if (!sendServer(port))
+  std::string msg = "server";
+  msg += '\0';
+  msg += st ? getHost() : "";
+  msg += '\0';
+  msg += st ? st->getPort() : "";
+
+  // Sen the new backup server address and port to the main server
+  if (!sendMsg(msg))
     ct.delServer(this);
 }
 
-bool RemoteServer::sendServer(const std::string& port) {
-  std::string msg = "server";
-  msg += '\0';
-
-  if (port.size() > 0)
-    msg += getHost();
-
-  msg += '\0';
-  msg += port;
-
-  return sendMsg(msg);
-}
-
 void RemoteServer::newServer(const char* host, const char* port) {
+  // Connect to the new received server
   RemoteServer* serv = new RemoteServer(ct);
   if (serv) {
     try {

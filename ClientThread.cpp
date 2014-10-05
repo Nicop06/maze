@@ -132,7 +132,7 @@ void ClientThread::createBackups() {
   std::unique_lock<std::mutex> lck(servers_mtx);
   while (servers.size() < NB_BACKUP) {
     lck.unlock();
-    if (!st->createServer()) {
+    if (!st->createBackupServer()) {
       std::cerr << "Failed to create backup servers\n";
       exit();
       return;
@@ -179,10 +179,10 @@ void ClientThread::movePlayer(int id, char dir) {
 
 void ClientThread::syncMove(Player* player, char dir) {
   if (player)
-    player->move(dir, std::bind(&ClientThread::sendSync, this, player->id(), dir));
+    player->move(dir, std::bind(&ClientThread::sendSyncMove, this, player->id(), dir));
 }
 
-void ClientThread::sendSync(int id, char dir) {
+void ClientThread::sendSyncMove(int id, char dir) {
   std::unique_lock<std::mutex> lck(sync_mtx);
   nb_sync = 0;
 

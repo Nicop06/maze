@@ -31,7 +31,6 @@ class RemoteServer {
 
     void loop();
     void createServer(int N, const char* state, size_t size);
-    bool sendServer(const std::string& host);
     void newServer(const char* host, const char* port);
     bool sendMsg(const std::string& msg, bool eos = true);
     bool playerMoved();

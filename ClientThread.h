@@ -32,7 +32,7 @@ class ClientThread {
     void move(char dir);
     void movePlayer(int id, char dir);
     void syncMove(Player* player, char dir);
-    void sendSync(int id, char dir);
+    void sendSyncMove(int id, char dir);
     void moveDone();
 
     void update(const char* state, size_t size);
