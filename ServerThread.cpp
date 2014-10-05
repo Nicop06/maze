@@ -214,12 +214,20 @@ void ServerThread::loop() {
 
 bool ServerThread::createServer() {
   std::unique_lock<std::mutex> lck(new_srv_mtx);
-  std::lock_guard<std::mutex> pms_lck(pms_mtx);
+  std::unique_lock<std::mutex> pms_lck(pms_mtx);
+  std::map<int, PlayerManager*> old_pms(pms);
+  pms_lck.unlock();
 
-  for (const auto& pair: pms) {
+  for (const auto& pair: old_pms) {
+    std::unique_lock<std::mutex> pms_lck_bis(pms_mtx);
+    auto it = pms.find(pair.first);
+    if (it == pms.end())
+      continue;
+    pms_lck_bis.unlock();
+
     new_srv_created = false;
     pair.second->createServer();
-    cv_new_srv.wait_for(lck, std::chrono::seconds(LOCK_TIMEOUT));
+    cv_new_srv.wait_for(lck, std::chrono::seconds(BACKUP_TIMEOUT));
 
     if (new_srv_created)
       break;

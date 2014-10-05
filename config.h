@@ -10,6 +10,7 @@
 #define BACKLOG 10
 #define TIMEOUT 20
 #define LOCK_TIMEOUT 2
+#define BACKUP_TIMEOUT 5
 #define NB_BACKUP 1
 
 #define MAXSIZE 100
