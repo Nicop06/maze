@@ -61,10 +61,12 @@ void RemoteServer::exit() {
   }
 }
 
+#include <iostream>
 void RemoteServer::loop() {
   char buf[BUFSIZE];
   std::string buffer;
-  uint32_t size(0), len, head;
+  uint32_t size(0), head;
+  ssize_t len;
   int* data;
   struct pollfd pfd;
 
@@ -204,7 +206,16 @@ bool RemoteServer::playerMoved() {
 }
 
 bool RemoteServer::sendMsg(const std::string& msg, bool eos) {
-  if (send(sockfd, msg.c_str(), msg.size() + (eos ? 1 : 0), 0) == -1) {
+  ssize_t n;
+  size_t len = msg.size() + (eos ? 1 : 0);
+  const char* p = msg.data();
+
+  while ((n = send(sockfd, p, len, 0)) > 0) {
+    p += n;
+    len -= n;
+  }
+
+  if (n < 0) {
     exit();
     return false;
   }

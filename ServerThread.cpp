@@ -160,7 +160,7 @@ void ServerThread::acceptClient(int id) {
 
 void ServerThread::loop() {
   char buf[BUFSIZE];
-  int len;
+  ssize_t len;
 
   while (running) {
     if (poll(fds.data(), fds.size(), 100) > 0) {

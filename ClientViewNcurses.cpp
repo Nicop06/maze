@@ -19,7 +19,8 @@ ClientViewNcurses::~ClientViewNcurses() {
   if (loop_th.joinable())
     loop_th.join();
 
-  endwin();
+  if (stdscr)
+    endwin();
 }
 
 void ClientViewNcurses::init(int id, int N) {

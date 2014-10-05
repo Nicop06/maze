@@ -58,7 +58,8 @@ void ClientThread::loop() {
   while (running) {
     cleanServers();
     createBackups();
-    cv_loop.wait(lck);
+    if (running)
+      cv_loop.wait(lck);
   }
 }
 

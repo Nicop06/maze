@@ -192,9 +192,17 @@ void PlayerManager::sendServer(const std::string& host, const std::string& port)
 }
 
 void PlayerManager::sendMsg(const std::string& msg) {
-  if (send(sockfd, msg.data(), msg.size(), 0) <= 0) {
-    if (player)
-      std::cerr << "Error while sending message to client " << player->id() << std::endl;
+  ssize_t n;
+  size_t len = msg.size();
+  const char* p = msg.data();
+
+  while ((n = send(sockfd, p, len, 0)) > 0) {
+    p += n;
+    len -= n;
+  }
+
+  if (n < 0) {
+    std::cerr << "Error while sending message to client " << player ? player->id() : "" << std::endl;
     stop();
   }
 }
