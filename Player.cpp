@@ -31,8 +31,8 @@ void Player::move(char dir, GameState::callback synchronize) {
 std::string Player::getState() {
   std::string state;
 
-  int nid = htonl(mId);
-  int nT = htonl(T);
+  uint32_t nid = htonl(mId);
+  uint32_t nT = htonl(T);
 
   state.append((char*) &nid, 4);
   state.append((char*) &nT, 4);

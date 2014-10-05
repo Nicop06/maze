@@ -128,7 +128,7 @@ void ServerThread::connectClients() {
 }
 
 void ServerThread::connectClientsLoop() {
-  uint32_t nb_players;
+  size_t nb_players;
   struct pollfd pfd_listen;
 
   pfd_listen.fd = sockfd;
@@ -164,7 +164,7 @@ void ServerThread::loop() {
 
   while (running) {
     if (poll(fds.data(), fds.size(), 100) > 0) {
-      for (uint32_t i = 0; i < fds.size(); ++i) {
+      for (size_t i = 0; i < fds.size(); ++i) {
         if (!fds[i].revents)
           continue;
 

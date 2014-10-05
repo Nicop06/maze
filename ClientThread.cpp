@@ -106,7 +106,7 @@ void ClientThread::cleanServers() {
   old_servers.clear();
 }
 
-const ServerThread* ClientThread::startServer(int N, const char* state, uint32_t size) {
+const ServerThread* ClientThread::startServer(int N, const char* state, size_t size) {
   if (!st) {
     try {
       st = new ServerThread(N, 0, *this);
@@ -208,7 +208,7 @@ void ClientThread::moveDone() {
   cv_sync.notify_one();
 }
 
-void ClientThread::update(const char* state, const uint32_t size) {
+void ClientThread::update(const char* state, size_t size) {
   if (initialized)
     view->update(state, size);
 }

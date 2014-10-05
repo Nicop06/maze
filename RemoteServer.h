@@ -30,7 +30,7 @@ class RemoteServer {
     int sockfd;
 
     void loop();
-    void createServer(int N, const char* state, uint32_t size);
+    void createServer(int N, const char* state, size_t size);
     bool sendServer(const std::string& host);
     void newServer(const char* host, const char* port);
     bool sendMsg(const std::string& msg, bool eos = true);

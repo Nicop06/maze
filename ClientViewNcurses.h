@@ -15,11 +15,11 @@ class ClientViewNcurses : public ClientView, public std::streambuf {
 
     void init(int id, int N);
 
-    virtual int overflow( int c );
+    virtual int overflow(int c);
     virtual int sync();
 
     // Update the view
-    int update(const char* state, uint32_t size);
+    int update(const char* state, size_t size);
 
   private:
     // The size of the game

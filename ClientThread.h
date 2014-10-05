@@ -26,7 +26,7 @@ class ClientThread {
 
     void addServer(RemoteServer* serv, bool join = false);
     void delServer(RemoteServer* serv);
-    const ServerThread* startServer(int N, const char* state, uint32_t size);
+    const ServerThread* startServer(int N, const char* state, size_t size);
 
     // Actions
     void move(char dir);
@@ -35,7 +35,7 @@ class ClientThread {
     void sendSync(int id, char dir);
     void moveDone();
 
-    void update(const char* state, uint32_t size);
+    void update(const char* state, size_t size);
     void initView(int id, int N);
     void setState(GameState* gameState);
 

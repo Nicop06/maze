@@ -57,7 +57,7 @@ void PlayerManager::addMessage(const std::string& msg) {
     return;
 
   std::unique_lock<std::mutex> lck(msg_mx);
-  uint32_t nb_new = std::count(msg.begin(), msg.end(), '\0');
+  size_t nb_new = std::count(msg.begin(), msg.end(), '\0');
   buffer += msg;
 
   if (nb_new > 0)
@@ -134,8 +134,8 @@ void PlayerManager::processMessage() {
 
 void PlayerManager::join() {
   std::string msg;
-  int id = htonl(player->id());
-  int N = htonl(gameState.getSize());
+  uint32_t id = htonl(player->id());
+  uint32_t N = htonl(gameState.getSize());
   uint32_t size = htonl(8);
   uint32_t head = htonl(INIT_CLIENT);
 
@@ -202,7 +202,10 @@ void PlayerManager::sendMsg(const std::string& msg) {
   }
 
   if (n < 0) {
-    std::cerr << "Error while sending message to client " << player ? player->id() : "" << std::endl;
+    std::cerr << "Error while sending message to client ";
+    if (player)
+     std::cerr << player->id();
+    std::cerr << std::endl;
     stop();
   }
 }

@@ -14,7 +14,7 @@ class ClientView {
     virtual void init(int id, int N) = 0;
 
     // Update the view
-    virtual int update(const char* state, uint32_t size) = 0;
+    virtual int update(const char* state, size_t size) = 0;
 
   protected:
     // The id of the client

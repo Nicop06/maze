@@ -106,7 +106,7 @@ void ClientViewNcurses::loop() {
   clientThread.exit();
 }
 
-int ClientViewNcurses::update(const char* state, const uint32_t size) {
+int ClientViewNcurses::update(const char* state, const size_t size) {
   if (size < 8 || !running)
     return -1;
 
@@ -115,7 +115,7 @@ int ClientViewNcurses::update(const char* state, const uint32_t size) {
 
   int T = ntohl(*data);
   int P = ntohl(*(data + 1));
-  const uint32_t exp_size = 8 * T + 16 * P + 8;
+  const size_t exp_size = 8 * T + 16 * P + 8;
 
   if (size < exp_size || (T+P) > N*N)
     return -1;

@@ -33,7 +33,7 @@ GameState::~GameState() {
   delete[] grid;
 }
 
-void GameState::initState(const char* state, uint32_t size) {
+void GameState::initState(const char* state, size_t size) {
   std::lock_guard<std::mutex> lck(state_mutex);
   if (size < 8)
     return;
@@ -45,7 +45,7 @@ void GameState::initState(const char* state, uint32_t size) {
   M = T;
   P = ntohl(*(data + 1));
 
-  const uint32_t exp_size = 8 * T + 16 * P + 8;
+  const size_t exp_size = 8 * T + 16 * P + 8;
 
   if (size < exp_size || (T+P) > N*N)
     return;
@@ -171,8 +171,8 @@ std::string GameState::getState() {
   std::lock_guard<std::mutex> lck(state_mutex);
   std::string state;
 
-  int nT = htonl(T);
-  int nP = htonl(P);
+  uint32_t nT = htonl(T);
+  uint32_t nP = htonl(P);
 
   state.append((char*) &nT, 4);
   state.append((char*) &nP, 4);

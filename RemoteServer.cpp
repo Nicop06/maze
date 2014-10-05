@@ -65,7 +65,8 @@ void RemoteServer::exit() {
 void RemoteServer::loop() {
   char buf[BUFSIZE];
   std::string buffer;
-  uint32_t size(0), head;
+  uint32_t head;
+  size_t size(0);
   ssize_t len;
   int* data;
   struct pollfd pfd;
@@ -103,8 +104,8 @@ void RemoteServer::loop() {
           break;
         case NEW_SERVER:
           {
-            uint32_t host_pos = buffer.find('\0', 8);
-            uint32_t port_pos = buffer.find('\0', host_pos + 1);
+            size_t host_pos = buffer.find('\0', 8);
+            size_t port_pos = buffer.find('\0', host_pos + 1);
             newServer(buffer.data() + host_pos, buffer.data() + port_pos);
           }
           break;
@@ -154,7 +155,7 @@ bool RemoteServer::connectSrv(int id) {
   return sendMsg(msg);
 }
 
-void RemoteServer::createServer(int N, const char* state, uint32_t size) {
+void RemoteServer::createServer(int N, const char* state, size_t size) {
   const ServerThread* st = ct.startServer(N, state, size);
   std::string port = st ? st->getPort() : "";
   if (!sendServer(port))

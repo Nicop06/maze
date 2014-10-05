@@ -4,8 +4,8 @@
 std::string Cell::getState() {
   std::string state;
 
-  int nx = htonl(mx);
-  int ny = htonl(my);
+  uint32_t nx = htonl(mx);
+  uint32_t ny = htonl(my);
 
   state.append((char*) &nx, 4);
   state.append((char*) &ny, 4);

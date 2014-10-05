@@ -18,7 +18,7 @@ class GameState {
     GameState(int N, int M);
     ~GameState();
 
-    void initState(const char* state, uint32_t size);
+    void initState(const char* state, size_t size);
     void initTreasures();
 
     Player* getPlayer(int id) const;
