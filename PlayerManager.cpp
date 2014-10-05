@@ -120,6 +120,7 @@ void PlayerManager::processMessage() {
         port = tmp.substr(old_pos, pos - old_pos);
 
         st.newServer(this, host, port);
+        nb_msg -= 2;
       }
 
       nb_msg--;
