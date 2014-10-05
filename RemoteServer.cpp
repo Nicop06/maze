@@ -178,8 +178,13 @@ bool RemoteServer::sendServer(const std::string& port) {
 void RemoteServer::newServer(const char* host, const char* port) {
   RemoteServer* serv = new RemoteServer(ct);
   if (serv) {
-    serv->init(host, port);
-    ct.addServer(serv);
+    try {
+      serv->init(host, port);
+      ct.addServer(serv);
+    } catch (const std::string& e) {
+      std::cerr << "Error: " << e << std::endl;
+      delete serv;
+    }
   }
 }
 

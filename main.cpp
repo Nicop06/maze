@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     }
 
     ct.loop();
-  } catch(std::string const& e){
+  } catch(std::string const& e) {
     std::cerr << "Error : " << e << std::endl;
     return -1;
   }

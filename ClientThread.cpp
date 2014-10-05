@@ -117,6 +117,8 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
       return st;
     } catch (const std::string& e) {
       std::cerr << "Error: " << e << std::endl;
+      delete st;
+      st = NULL;
     }
   }
 

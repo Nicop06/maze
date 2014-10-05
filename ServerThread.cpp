@@ -69,7 +69,7 @@ bool ServerThread::tryBind(const char* port) {
 
   int s = getaddrinfo(NULL, port, &hints, &result);
   if (s != 0)
-    throw std::string("getaddrinfo: ", gai_strerror(s));
+    throw std::string(gai_strerror(s));
 
   // Try to connect to the list of addresses returned by getaddrinfo()
 
@@ -151,15 +151,24 @@ void ServerThread::connectClientsLoop() {
 void ServerThread::acceptClient(int id) {
   struct pollfd pfd;
   pfd.fd = accept(sockfd, NULL, NULL);
-  if (pfd.fd < 0)
-    throw std::string("accept");
+  if (pfd.fd < 0) {
+    std::cerr << "Error while accepting client\n";
+    return;
+  }
+
   pfd.events = POLLIN;
   fds.push_back(pfd);
 
-  PlayerManager *pm = new PlayerManager(pfd.fd, gameState, *this);
-  pm->init(id);
-  std::lock_guard<std::mutex> lck(pms_mtx);
-  pms[pfd.fd] = pm;
+  PlayerManager *pm = NULL;
+  try {
+    pm = new PlayerManager(pfd.fd, gameState, *this);
+    pm->init(id);
+    std::lock_guard<std::mutex> lck(pms_mtx);
+    pms[pfd.fd] = pm;
+  } catch (const std::string& e) {
+    std::cerr << "Error: " << e << std::endl;
+    delete pm;
+  }
 }
 
 void ServerThread::loop() {
@@ -232,7 +241,7 @@ void ServerThread::newServer(const PlayerManager* pm, const std::string& host, c
       serv->init(host.c_str(), port.c_str());
       ct.addServer(serv);
       new_srv_created = true;
-    } catch (std::string& e) {
+    } catch (const std::string& e) {
     }
   }
 
