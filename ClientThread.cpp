@@ -209,6 +209,7 @@ void ClientThread::moveDone() {
 }
 
 void ClientThread::update(const char* state, size_t size) {
+  std::lock_guard<std::mutex> lck(update_mtx);
   if (initialized)
     view->update(state, size);
 }

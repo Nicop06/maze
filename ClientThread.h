@@ -60,6 +60,8 @@ class ClientThread {
     std::condition_variable cv_sync;
     std::mutex sync_mtx;
 
+    std::mutex update_mtx;
+
     void init();
     void delSrv(RemoteServer* srv);
     void cleanServers();
