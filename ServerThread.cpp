@@ -205,7 +205,7 @@ void ServerThread::loop() {
 
 bool ServerThread::createServer() {
   std::unique_lock<std::mutex> lck(new_srv_mtx);
-  std::lock_guard<std::mutex> lck(pms_mtx);
+  std::lock_guard<std::mutex> pms_lck(pms_mtx);
 
   for (const auto& pair: pms) {
     new_srv_created = false;

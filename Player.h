@@ -4,6 +4,8 @@
 #include "Cell.h"
 #include "GameState.h"
 
+#include <atomic>
+
 class Player: public Cell {
   public:
     Player(GameState* gameState, int x, int y, int id, int T)
@@ -25,10 +27,10 @@ class Player: public Cell {
 
   private:
     // The id of the player
-    int mId;
+    std::atomic<int> mId;
 
     // The number of treasures
-    int T;
+    std::atomic<int> T;
 
     // The gameState
     GameState* pGameState;

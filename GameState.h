@@ -1,6 +1,7 @@
 #ifndef _GAMESTATE_GUARD
 #define _GAMESTATE_GUARD
 
+#include <atomic>
 #include <mutex>
 #include <condition_variable>
 #include <unordered_set>
@@ -21,7 +22,7 @@ class GameState {
     void initState(const char* state, size_t size);
     void initTreasures();
 
-    Player* getPlayer(int id) const;
+    Player* getPlayer(int id);
     Player* addPlayer(int id);
     void removePlayer(int id);
 
@@ -37,16 +38,16 @@ class GameState {
     std::mutex state_mutex;
 
     // The size of the grid
-    int N;
+    std::atomic<int> N;
 
     // The total number of treasures
-    int M;
+    std::atomic<int> M;
 
     // The number of available treasures
-    int T;
+    std::atomic<int> T;
 
     // The number of player
-    int P;
+    std::atomic<int> P;
 
     // The grid
     Cell*** grid;

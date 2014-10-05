@@ -42,7 +42,7 @@ void GameState::initState(const char* state, size_t size) {
   const int* max_data;
 
   T = ntohl(*data);
-  M = T;
+  M = ntohl(*data);
   P = ntohl(*(data + 1));
 
   const size_t exp_size = 8 * T + 16 * P + 8;
@@ -122,7 +122,7 @@ bool GameState::checkBounds(int x, int y) const {
   return x >= 0 && y >= 0 && x < N && y < N;
 }
 
-Player* GameState::getPlayer(int id) const {
+Player* GameState::getPlayer(int id) {
   std::lock_guard<std::mutex> lck(state_mutex);
   auto it = players.find(id);
   return it == players.end() ? NULL : it->second;
@@ -188,11 +188,9 @@ std::string GameState::getState() {
 }
 
 int GameState::getSize() const {
-  std::lock_guard<std::mutex> lck(state_mutex);
   return N;
 }
 
-int getNbPlayers() const {
-  std::lock_guard<std::mutex> lck(state_mutex);
+int GameState::getNbPlayers() const {
   return P;
 }

@@ -2,6 +2,7 @@
 #define _CELL_GUARD
 
 #include <string>
+#include <atomic>
 
 class Cell {
   public:
@@ -18,7 +19,7 @@ class Cell {
 
   protected:
     // The position of the cell
-    int mx, my;
+    std::atomic<int> mx, my;
 };
 
 #endif
