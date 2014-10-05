@@ -24,6 +24,7 @@ ClientViewNcurses::~ClientViewNcurses() {
 }
 
 void ClientViewNcurses::init(int id, int N) {
+  std::lock_guard<std::mutex> lck(ncurses_mtx);
   if (!running && N != 0) {
     this->N = N;
     this->id = id;
@@ -59,6 +60,7 @@ void ClientViewNcurses::init(int id, int N) {
 }
 
 int ClientViewNcurses::overflow(int c) {
+  std::lock_guard<std::mutex> lck(ncurses_mtx);
   int ret = c;
   if(c != EOF) {
     if(waddch(dbg_win, (chtype)c) == ERR)
@@ -107,6 +109,7 @@ void ClientViewNcurses::loop() {
 }
 
 int ClientViewNcurses::update(const char* state, const size_t size) {
+  std::lock_guard<std::mutex> lck(ncurses_mtx);
   if (size < 8 || !running)
     return -1;
 

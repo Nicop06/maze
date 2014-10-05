@@ -149,7 +149,6 @@ void PlayerManager::join() {
 }
 
 void PlayerManager::move(const std::string& cmd) {
-  std::string msg;
   if (cmd != "NoMove")
     st.syncMove(player, cmd[0]);
 

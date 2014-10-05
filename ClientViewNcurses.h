@@ -5,6 +5,7 @@
 
 #include <thread>
 #include <atomic>
+#include <mutex>
 #include <ncurses.h>
 #include <iostream>
 
@@ -31,6 +32,7 @@ class ClientViewNcurses : public ClientView, public std::streambuf {
     // The main thread
     std::thread loop_th;
     std::atomic<bool> running;
+    std::mutex ncurses_mtx;
 
     // The main loop
     void loop();

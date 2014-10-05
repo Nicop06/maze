@@ -110,8 +110,11 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
   if (!st) {
     try {
       st = new ServerThread(N, 0, *this);
-      if (pGameState)
+      if (pGameState) {
         pGameState->initState(state, size);
+        if (!player)
+          player = pGameState->getPlayer(id);
+      }
       st->init(NULL);
       st->connectClients();
       return st;
@@ -229,7 +232,4 @@ void ClientThread::initView(int id, int N) {
 
 void ClientThread::setState(GameState* gameState) {
   pGameState = gameState;
-
-  if (pGameState)
-    this->player = pGameState->getPlayer(id);
 }
