@@ -26,6 +26,7 @@ ServerThread::~ServerThread() {
   if (connect_th.joinable())
     connect_th.join();
 
+  std::lock_guard<std::mutex> lck(pms_mtx);
   for (const auto& pair: pms)
     delete pair.second;
 }
@@ -128,7 +129,7 @@ void ServerThread::connectClients() {
 }
 
 void ServerThread::connectClientsLoop() {
-  size_t nb_players;
+  size_t nb_players, pms_size;
   struct pollfd pfd_listen;
 
   pfd_listen.fd = sockfd;
@@ -139,8 +140,10 @@ void ServerThread::connectClientsLoop() {
       acceptClient(-1);
     }
 
+    std::lock_guard<std::mutex> lck(pms_mtx);
     nb_players = std::max(gameState.getNbPlayers() - 1, 0);
-  } while (running && pms.size() < nb_players);
+    pms_size = pms.size();
+  } while (running && pms_size < nb_players);
 
   close(sockfd);
 }
@@ -155,6 +158,7 @@ void ServerThread::acceptClient(int id) {
 
   PlayerManager *pm = new PlayerManager(pfd.fd, gameState, *this);
   pm->init(id);
+  std::lock_guard<std::mutex> lck(pms_mtx);
   pms[pfd.fd] = pm;
 }
 
@@ -168,6 +172,7 @@ void ServerThread::loop() {
         if (!fds[i].revents)
           continue;
 
+        std::lock_guard<std::mutex> lck(pms_mtx);
         auto it = pms.find(fds[i].fd);
 
         if (it != pms.end()) {
@@ -200,6 +205,7 @@ void ServerThread::loop() {
 
 bool ServerThread::createServer() {
   std::unique_lock<std::mutex> lck(new_srv_mtx);
+  std::lock_guard<std::mutex> lck(pms_mtx);
 
   for (const auto& pair: pms) {
     new_srv_created = false;
@@ -234,6 +240,7 @@ void ServerThread::newServer(const PlayerManager* pm, const std::string& host, c
 
   if (new_srv_created) {
     lck.unlock();
+    std::lock_guard<std::mutex> lck(pms_mtx);
     for (const auto& pair: pms) {
       if (pair.second != pm)
         pair.second->sendServer(host, port);

@@ -38,6 +38,7 @@ class ServerThread {
     GameState gameState;
     ClientThread& ct;
     std::map<int, PlayerManager*> pms; //sockfd to playerManager
+    std::mutex pms_mtx;
 
     std::thread connect_th;
     std::thread loop_th;
