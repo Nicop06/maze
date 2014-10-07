@@ -136,7 +136,7 @@ void ClientThread::stop() {
 }
 
 void ClientThread::move(char dir) {
-  if (id >= 0) {
+  if (pGameState && st) {
     syncMove(id, dir);
     const std::string state = pGameState->getState();
     update(state.data(), state.size());
