@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <string>
+#include <iostream>
 
 #include "RemoteServer.h"
 #include "ServerThread.h"
@@ -12,7 +13,7 @@
 RemoteServer::~RemoteServer() {
   running = false;
 
-  if (loop_th.joinable())
+  if (loop_th.joinable() && loop_th.get_id() != std::this_thread::get_id())
     loop_th.join();
 
   close(sockfd);
@@ -54,7 +55,7 @@ void RemoteServer::init(const char* host, const char* port) {
   loop_th = std::thread(&RemoteServer::loop, this);
 }
 
-void RemoteServer::exit() {
+void RemoteServer::stop() {
   if (running) {
     running = false;
     sendMsg("exit");
@@ -76,7 +77,7 @@ void RemoteServer::loop() {
   while (running) {
     if (poll(&pfd, 1, 100) > 0) {
       if ((len = recv(sockfd, buf, BUFSIZE, MSG_DONTWAIT)) <= 0) {
-        exit();
+        stop();
         ct.delServer(this);
         return;
       }
@@ -158,7 +159,7 @@ void RemoteServer::createServer(int N, const char* state, size_t size) {
   msg += '\0';
   msg += st ? st->getPort() : "";
 
-  // Sen the new backup server address and port to the main server
+  // Send the new backup server address and port to the main server
   if (!sendMsg(msg))
     ct.delServer(this);
 }
@@ -211,7 +212,7 @@ bool RemoteServer::sendMsg(const std::string& msg, bool eos) {
   }
 
   if (n < 0) {
-    exit();
+    stop();
     return false;
   }
 

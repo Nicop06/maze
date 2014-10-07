@@ -21,7 +21,6 @@ ClientThread::ClientThread() : st(NULL), servers(2), old_servers(2), id(-1),
 }
 
 ClientThread::~ClientThread() {
-  exit();
   delete view;
   delete st;
 
@@ -84,10 +83,10 @@ void ClientThread::addServer(RemoteServer* serv, bool join) {
 
 void ClientThread::delServer(RemoteServer* serv) {
   std::unique_lock<std::mutex> lck(servers_mtx);
-  delSrv(serv);
+  _delServer(serv);
 }
 
-void ClientThread::delSrv(RemoteServer* serv) {
+void ClientThread::_delServer(RemoteServer* serv) {
   auto it = servers.find(serv);
 
   if (it != servers.end())
@@ -144,12 +143,8 @@ void ClientThread::createBackups() {
   }
 }
 
-void ClientThread::exit() {
+void ClientThread::stop() {
   if (running) {
-    std::lock_guard<std::mutex> lck(servers_mtx);
-    for (RemoteServer* srv: servers)
-      srv->exit();
-
     running = false;
     cv_loop.notify_one();
   }
@@ -167,7 +162,7 @@ void ClientThread::move(char dir) {
         if (serv->move(dir)) {
           break;
         } else {
-          delSrv(serv);
+          _delServer(serv);
         }
       }
     }
@@ -194,7 +189,7 @@ void ClientThread::sendSyncMove(int id, char dir) {
     if (serv->movePlayer(id, dir)) {
       ++nb_sync;
     } else {
-      delSrv(serv);
+      _delServer(serv);
     }
   }
   srv_lck.unlock();

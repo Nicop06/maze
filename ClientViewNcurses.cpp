@@ -105,7 +105,7 @@ void ClientViewNcurses::loop() {
       clientThread.move(dir);
   }
 
-  clientThread.exit();
+  clientThread.stop();
 }
 
 int ClientViewNcurses::update(const char* state, const size_t size) {

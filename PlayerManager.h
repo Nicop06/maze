@@ -18,8 +18,6 @@ class PlayerManager
     ~PlayerManager();
 
     void init(int playerId);
-    void start();
-    void stop();
     void addMessage(const std::string& msg);
 
     void createBackupServer();
@@ -42,6 +40,7 @@ class PlayerManager
     std::atomic<int> nb_msg;
     std::atomic<bool> running;
 
+    void stop();
     void processMessage();
     void join();
     void move(const std::string& cmd);

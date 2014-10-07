@@ -21,7 +21,7 @@ class ClientThread {
     ~ClientThread();
     void init(ServerThread* st);
     void init(RemoteServer* serv);
-    void exit();
+    void stop();
     void loop();
 
     void addServer(RemoteServer* serv, bool join = false);
@@ -63,7 +63,7 @@ class ClientThread {
     std::mutex update_mtx;
 
     void init();
-    void delSrv(RemoteServer* srv);
+    void _delServer(RemoteServer* srv);
     void cleanServers();
     void createBackups();
 };
