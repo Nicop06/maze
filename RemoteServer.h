@@ -28,7 +28,6 @@ class RemoteServer {
     std::atomic<bool> running;
     int sockfd;
 
-    void stop();
     void loop();
     void createServer(int N, const char* state, size_t size);
     void newServer(const char* host, const char* port);

@@ -11,7 +11,10 @@
 #include "ServerThread.h"
 
 RemoteServer::~RemoteServer() {
-  running = false;
+  if (running) {
+    running = false;
+    sendMsg("exit");
+  }
 
   if (loop_th.joinable() && loop_th.get_id() != std::this_thread::get_id())
     loop_th.join();
@@ -55,13 +58,6 @@ void RemoteServer::init(const char* host, const char* port) {
   loop_th = std::thread(&RemoteServer::loop, this);
 }
 
-void RemoteServer::stop() {
-  if (running) {
-    running = false;
-    sendMsg("exit");
-  }
-}
-
 void RemoteServer::loop() {
   char buf[BUFSIZE];
   std::string buffer;
@@ -77,7 +73,6 @@ void RemoteServer::loop() {
   while (running) {
     if (poll(&pfd, 1, 100) > 0) {
       if ((len = recv(sockfd, buf, BUFSIZE, MSG_DONTWAIT)) <= 0) {
-        stop();
         ct.delServer(this);
         return;
       }
@@ -211,10 +206,8 @@ bool RemoteServer::sendMsg(const std::string& msg, bool eos) {
     len -= n;
   }
 
-  if (n < 0) {
-    stop();
+  if (n < 0)
     return false;
-  }
 
   return true;
 }
