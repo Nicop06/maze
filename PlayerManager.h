@@ -9,7 +9,6 @@
 
 #include "ServerThread.h"
 #include "GameState.h"
-#include "Player.h"
 
 class PlayerManager
 {
@@ -17,7 +16,7 @@ class PlayerManager
     PlayerManager(int sockfd, GameState& gameState, ServerThread& st);
     ~PlayerManager();
 
-    void init(int playerId);
+    void start(int playerId = -1);
     void addMessage(const std::string& msg);
 
     void createBackupServer();
@@ -25,11 +24,11 @@ class PlayerManager
 
   private:
     int sockfd;
-    bool joined;
+    std::atomic<bool> joined;
+    std::atomic<int> id;
 
     GameState& gameState;
     ServerThread& st;
-    Player* player;
 
     std::string buffer;
 

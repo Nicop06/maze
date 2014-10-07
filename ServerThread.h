@@ -25,14 +25,13 @@ class ServerThread {
 
     bool createBackupServer();
     void newServer(const PlayerManager* pm, const std::string& host, const std::string& port);
-    void syncMove(Player* player, char dir);
+    void syncMove(int id, char dir);
 
     const std::string& getPort() const { return port; }
 
   private:
     std::string port;
     int sockfd;
-    int clientId;
     std::vector<struct pollfd> fds;
 
     GameState gameState;

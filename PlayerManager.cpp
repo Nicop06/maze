@@ -9,7 +9,7 @@
 #include <cstring>
 
 PlayerManager::PlayerManager(int sockfd, GameState& gameState, ServerThread& st)
-  : sockfd(sockfd), joined(false), gameState(gameState), st(st), player(NULL), nb_msg(0), running(false) {
+  : sockfd(sockfd), joined(false), id(-1), gameState(gameState), st(st), nb_msg(0), running(false) {
 }
 
 PlayerManager::~PlayerManager() {
@@ -21,20 +21,15 @@ PlayerManager::~PlayerManager() {
   close(sockfd);
 }
 
-void PlayerManager::init(int playerId) {
-  joined = playerId == -1;
+void PlayerManager::start(int playerId) {
+  this->joined = playerId == -1;
+  this->id = playerId;
+  bool created = playerId == -1 ? true : gameState.addPlayer(playerId);
 
-  if (playerId >= 0)
-    player = gameState.addPlayer(playerId);
-
-  if (!running && (player || playerId == -1)) {
+  if (!running && created) {
     running = true;
 
-    if (player) {
-      std::cout << "Connection with client " << player->id() << std::endl;
-    } else {
-      std::cout << "Connection with existing client" << std::endl;
-    }
+    std::cout << "Connection with client " << playerId << std::endl;
 
     msg_thread = std::thread(&PlayerManager::processMessage, this);
   } else {
@@ -47,8 +42,7 @@ void PlayerManager::stop() {
     running = false;
     cv.notify_one();
 
-    if (player)
-      std::cout << "Closing connection with client " << player->id() << std::endl;
+    std::cout << "Closing connection with client " << id << std::endl;
   }
 }
 
@@ -87,12 +81,11 @@ void PlayerManager::processMessage() {
 
       if (cmd == "exit") {
         stop();
-        if (player)
-          gameState.removePlayer(player->id());
+        gameState.removePlayer(id);
         return;
       }
 
-      if (player) {
+      if (id >= 0) {
         if (cmd == "join" && !joined) {
           join();
           joined = true;
@@ -100,8 +93,8 @@ void PlayerManager::processMessage() {
           move(cmd);
         }
       } else if (joined && cmd.compare(0, 7, "connect") && tmp.length() > old_pos + 12 && tmp[old_pos + 12] == '\0') {
-        int* id = (int*)(tmp.data() + old_pos + 7);
-        player = gameState.getPlayer(ntohl(*id));
+        int* p_id = (int*)(tmp.data() + old_pos + 7);
+        this->id = *p_id;
         pos = old_pos + 12;
         nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
       }
@@ -135,14 +128,14 @@ void PlayerManager::processMessage() {
 
 void PlayerManager::join() {
   std::string msg;
-  uint32_t id = htonl(player->id());
+  uint32_t nId = htonl(id);
   uint32_t N = htonl(gameState.getSize());
   uint32_t size = htonl(8);
   uint32_t head = htonl(INIT_CLIENT);
 
   msg.append((char*) &head, 4);
   msg.append((char*) &size, 4);
-  msg.append((char*) &id, 4);
+  msg.append((char*) &nId, 4);
   msg.append((char*) &N, 4);
 
   sendMsg(msg);
@@ -150,7 +143,7 @@ void PlayerManager::join() {
 
 void PlayerManager::move(const std::string& cmd) {
   if (cmd != "NoMove")
-    st.syncMove(player, cmd[0]);
+    st.syncMove(id, cmd[0]);
 
   sendState(htonl(UPDATE_STATE));
 }
@@ -202,10 +195,7 @@ void PlayerManager::sendMsg(const std::string& msg) {
   }
 
   if (n < 0) {
-    std::cerr << "Error while sending message to client ";
-    if (player)
-     std::cerr << player->id();
-    std::cerr << std::endl;
+    std::cerr << "Error while sending message to client " << id << std::endl;
     stop();
   }
 }

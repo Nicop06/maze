@@ -22,13 +22,10 @@ class GameState {
     void initState(const char* state, size_t size);
     void initTreasures();
 
-    Player* getPlayer(int id);
-    Player* addPlayer(int id);
+    bool addPlayer(int id);
     void removePlayer(int id);
 
-    void updatePosition(Player* player, int new_x, int new_y, callback synchronize);
-
-    void synchronize();
+    void move(int id, char dir, callback synchronize = NULL);
 
     std::string getState();
     int getSize() const;

@@ -67,7 +67,7 @@ void GameState::initState(const char* state, size_t size) {
     int p_T = ntohl(*(data + 1));
     int x = ntohl(*(data + 2));
     int y = ntohl(*(data + 3));
-    players[p_id] = new Player(this, x, y, p_id, p_T);
+    players[p_id] = new Player(x, y, p_id, p_T);
   }
 }
 
@@ -93,27 +93,56 @@ void GameState::initTreasures() {
   }
 }
 
-void GameState::updatePosition(Player* player, int new_x, int new_y, GameState::callback synchronize) {
+void GameState::move(int id, char dir, GameState::callback synchronize) {
+  auto it = players.find(id);
+  if (it == players.end())
+    return;
+
+  Player *player = it->second;
+
   std::lock_guard<std::mutex> lck(state_mutex);
 
   if (synchronize)
     synchronize();
+
+  int new_x(player->x), new_y(player->y);
+
+  switch(dir) {
+    case 'S':
+      new_y++;
+      break;
+
+    case 'E':
+      new_x++;
+      break;
+
+    case 'N':
+      new_y--;
+      break;
+
+    case 'W':
+      new_x--;
+      break;
+
+    default:
+      return;
+  }
 
   if (checkBounds(new_x, new_y)) {
     Cell* cell = grid[new_x][new_y];
 
     if (!cell || cell->isTreasure()) {
       if (cell && cell->isTreasure()) {
-        player->incNbTreasures();
+        player->T++;
         T--;
         treasures.erase(dynamic_cast<Treasure*>(cell));
         delete cell;
       }
 
-      grid[player->x()][player->y()] = NULL;
+      grid[player->x][player->y] = NULL;
       grid[new_x][new_y] = player;
-      player->mx = new_x;
-      player->my = new_y;
+      player->x = new_x;
+      player->y = new_y;
     }
   }
 }
@@ -122,16 +151,13 @@ bool GameState::checkBounds(int x, int y) const {
   return x >= 0 && y >= 0 && x < N && y < N;
 }
 
-Player* GameState::getPlayer(int id) {
+bool GameState::addPlayer(int id) {
   std::lock_guard<std::mutex> lck(state_mutex);
-  auto it = players.find(id);
-  return it == players.end() ? NULL : it->second;
-}
 
-Player* GameState::addPlayer(int id) {
-  std::lock_guard<std::mutex> lck(state_mutex);
-  if (T + P >= N * N)
-    return NULL;
+  auto it = players.find(id);
+
+  if (T + P >= N * N || it != players.end())
+    return false;
 
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::minstd_rand generator(seed);
@@ -142,27 +168,28 @@ Player* GameState::addPlayer(int id) {
     int y = distribution(generator);
 
     if (!grid[x][y]) {
-      Player* player = new Player(this, x, y, id);
+      Player* player = new Player(x, y, id);
       grid[x][y] = player;
       players[id] = player;
       ++P;
-      return player;
+      return true;
     }
   }
 }
 
 void GameState::removePlayer(int id) {
   std::lock_guard<std::mutex> lck(state_mutex);
-  Player* player = players[id];
+  auto it = players.find(id);
 
-  if (player) {
-    int x(player->x());
-    int y(player->y());
+  if (it != players.end()) {
+    Player *player = it->second;
+    int x(player->x);
+    int y(player->y);
 
     if (grid[x][y] == player)
       grid[x][y] = NULL;
 
-    players.erase(player->id());
+    players.erase(it);
     delete player;
     --P;
   }
@@ -178,11 +205,26 @@ std::string GameState::getState() {
   state.append((char*) &nT, 4);
   state.append((char*) &nP, 4);
 
-  for (Treasure* treasure: treasures)
-    state += treasure->getState();
+  for (Treasure* treasure: treasures) {
+    uint32_t nx = htonl(treasure->x);
+    uint32_t ny = htonl(treasure->y);
 
-  for (const auto& pair: players)
-    state += pair.second->getState();
+    state.append((char*) &nx, 4);
+    state.append((char*) &ny, 4);
+  }
+
+  for (const auto& pair: players) {
+    Player *p = pair.second;
+    uint32_t nId = htonl(p->id);
+    uint32_t nT = htonl(p->T);
+    uint32_t nx = htonl(p->x);
+    uint32_t ny = htonl(p->y);
+
+    state.append((char*) &nId, 4);
+    state.append((char*) &nT, 4);
+    state.append((char*) &nx, 4);
+    state.append((char*) &ny, 4);
+  }
 
   return state;
 }

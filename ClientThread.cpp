@@ -13,10 +13,9 @@
 #include "RemoteServer.h"
 #include "ClientViewNcurses.h"
 #include "GameState.h"
-#include "Player.h"
 
 ClientThread::ClientThread() : st(NULL), id(-1),
-  initialized(false), pGameState(NULL), player(NULL), running(false) {
+  initialized(false), pGameState(NULL), running(false) {
   view = new ClientViewNcurses(*this);
 }
 
@@ -98,11 +97,8 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
   if (!st) {
     try {
       st = new ServerThread(N, 0, *this);
-      if (pGameState) {
+      if (pGameState)
         pGameState->initState(state, size);
-        if (!player)
-          player = pGameState->getPlayer(id);
-      }
       st->init(NULL);
       st->connectClients();
       return st;
@@ -140,8 +136,8 @@ void ClientThread::stop() {
 }
 
 void ClientThread::move(char dir) {
-  if (player) {
-    syncMove(player, dir);
+  if (id >= 0) {
+    syncMove(id, dir);
     const std::string state = pGameState->getState();
     update(state.data(), state.size());
   } else {
@@ -159,14 +155,13 @@ void ClientThread::move(char dir) {
 }
 
 void ClientThread::movePlayer(int id, char dir) {
-  Player* player = pGameState->getPlayer(id);
-  if (player)
-    player->move(dir);
+  if (pGameState)
+    pGameState->move(id, dir);
 }
 
-void ClientThread::syncMove(Player* player, char dir) {
-  if (player)
-    player->move(dir, std::bind(&ClientThread::sendSyncMove, this, player->id(), dir));
+void ClientThread::syncMove(int id, char dir) {
+  if (pGameState)
+    pGameState->move(id, dir, std::bind(&ClientThread::sendSyncMove, this, id, dir));
 }
 
 void ClientThread::sendSyncMove(int id, char dir) {
@@ -208,9 +203,6 @@ void ClientThread::initView(int id, int N) {
     this->id = id;
     view->init(id, N);
     initialized = true;
-
-    if (pGameState && !player)
-      this->player = pGameState->addPlayer(id);
   }
 }
 

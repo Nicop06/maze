@@ -162,7 +162,7 @@ void ServerThread::acceptClient(int id) {
   PlayerManager *pm = NULL;
   try {
     pm = new PlayerManager(pfd.fd, gameState, *this);
-    pm->init(id);
+    pm->start(id);
     std::lock_guard<std::mutex> lck(pms_mtx);
     pms[pfd.fd] = pm;
   } catch (const std::string& e) {
@@ -265,6 +265,6 @@ void ServerThread::newServer(const PlayerManager* pm, const std::string& host, c
   }
 }
 
-void ServerThread::syncMove(Player* player, char dir) {
-  ct.syncMove(player, dir);
+void ServerThread::syncMove(int id, char dir) {
+  ct.syncMove(id, dir);
 }

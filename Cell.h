@@ -6,20 +6,14 @@
 
 class Cell {
   public:
-    Cell(int x, int y) : mx(x), my(y) {}
+    Cell(int x, int y) : x(x), y(y) {}
     virtual ~Cell() {};
-
-    int x() const { return mx; }
-    int y() const { return my; }
 
     virtual bool isTreasure() const = 0;
     virtual bool isPlayer() const = 0;
 
-    virtual std::string getState();
-
-  protected:
     // The position of the cell
-    std::atomic<int> mx, my;
+    std::atomic<int> x, y;
 };
 
 #endif

@@ -13,7 +13,6 @@
 class ServerThread;
 class RemoteServer;
 class GameState;
-class Player;
 
 class ClientThread {
   public:
@@ -31,7 +30,7 @@ class ClientThread {
     // Actions
     void move(char dir);
     void movePlayer(int id, char dir);
-    void syncMove(Player* player, char dir);
+    void syncMove(int id, char dir);
     void sendSyncMove(int id, char dir);
     void moveDone();
 
@@ -45,11 +44,10 @@ class ClientThread {
     std::set<RemoteServer*> servers;
     std::mutex servers_mtx;
 
-    int id;
+    std::atomic<int> id;
     std::atomic<bool> initialized;
 
     GameState* pGameState;
-    Player* player;
 
     std::atomic<bool> running;
     std::condition_variable cv_loop;

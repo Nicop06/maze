@@ -2,38 +2,23 @@
 #define _PLAYER_GUARD
 
 #include "Cell.h"
-#include "GameState.h"
 
 #include <atomic>
 
 class Player: public Cell {
   public:
-    Player(GameState* gameState, int x, int y, int id, int T)
-      : Cell(x, y), mId(id), T(T), pGameState(gameState) {}
-    Player(GameState* gameState, int x, int y, int id) : Player(gameState, x, y, id, 0) {}
+    Player(int x, int y, int id, int T) : Cell(x, y), id(id), T(T) {}
+    Player(int x, int y, int id) : Player(x, y, id, 0) {}
     ~Player() {}
-
-    void incNbTreasures() { T++; }
-    int id() const { return mId; }
 
     bool isTreasure() const { return false; }
     bool isPlayer() const { return true; }
 
-    void move(char dir, GameState::callback synchronize = NULL);
-
-    std::string getState();
-
-    friend void GameState::updatePosition(Player* player, int new_x, int new_y, GameState::callback synchronize);
-
-  private:
     // The id of the player
-    std::atomic<int> mId;
+    std::atomic<int> id;
 
     // The number of treasures
     std::atomic<int> T;
-
-    // The gameState
-    GameState* pGameState;
 };
 
 #endif
