@@ -61,7 +61,6 @@ void RemoteServer::exit() {
   }
 }
 
-#include <iostream>
 void RemoteServer::loop() {
   char buf[BUFSIZE];
   std::string buffer;
