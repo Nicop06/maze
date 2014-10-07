@@ -15,7 +15,7 @@
 #include "GameState.h"
 #include "Player.h"
 
-ClientThread::ClientThread() : st(NULL), servers(2), old_servers(2), id(-1),
+ClientThread::ClientThread() : st(NULL), id(-1),
   initialized(false), pGameState(NULL), player(NULL), running(false) {
   view = new ClientViewNcurses(*this);
 }
@@ -23,8 +23,6 @@ ClientThread::ClientThread() : st(NULL), servers(2), old_servers(2), id(-1),
 ClientThread::~ClientThread() {
   delete view;
   delete st;
-
-  cleanServers();
 
   std::lock_guard<std::mutex> lck(servers_mtx);
   for (const RemoteServer* serv: servers)
@@ -55,7 +53,6 @@ void ClientThread::init() {
 void ClientThread::loop() {
   std::unique_lock<std::mutex> lck(loop_mtx);
   while (running) {
-    cleanServers();
     createBackups();
     if (running)
       cv_loop.wait(lck);
@@ -89,20 +86,12 @@ void ClientThread::delServer(RemoteServer* serv) {
 void ClientThread::_delServer(RemoteServer* serv) {
   auto it = servers.find(serv);
 
-  if (it != servers.end())
-    old_servers.insert(serv);
-
-  cv_loop.notify_one();
-}
-
-void ClientThread::cleanServers() {
-  std::lock_guard<std::mutex> lck(servers_mtx);
-  for (RemoteServer* serv: old_servers) {
-    servers.erase(serv);
-    delete serv;
+  if (it != servers.end()) {
+    delete *it;
+    servers.erase(it);
   }
 
-  old_servers.clear();
+  cv_loop.notify_one();
 }
 
 const ServerThread* ClientThread::startServer(int N, const char* state, size_t size) {
@@ -136,7 +125,7 @@ void ClientThread::createBackups() {
     lck.unlock();
     if (!st->createBackupServer()) {
       std::cerr << "Failed to create backup servers\n";
-      exit();
+      stop();
       return;
     }
     lck.lock();

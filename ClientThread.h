@@ -8,7 +8,7 @@
 #include <condition_variable>
 #include <atomic>
 #include <mutex>
-#include <unordered_set>
+#include <set>
 
 class ServerThread;
 class RemoteServer;
@@ -42,8 +42,7 @@ class ClientThread {
   private:
     ClientView* view;
     ServerThread* st;
-    std::unordered_set<RemoteServer*> servers;
-    std::unordered_set<RemoteServer*> old_servers;
+    std::set<RemoteServer*> servers;
     std::mutex servers_mtx;
 
     int id;
@@ -64,7 +63,6 @@ class ClientThread {
 
     void init();
     void _delServer(RemoteServer* srv);
-    void cleanServers();
     void createBackups();
 };
 
