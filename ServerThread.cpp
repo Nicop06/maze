@@ -97,6 +97,9 @@ void ServerThread::acceptClients() {
   pfd_listen.fd = sockfd;
   pfd_listen.events = POLLIN;
 
+  if (!gameState.addPlayer(playerId))
+    throw std::string("Cannot create player for client.");
+
   std::cout << "Server: waiting for connections..." << std::endl;
 
   std::chrono::steady_clock::time_point begin;
