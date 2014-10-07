@@ -56,7 +56,10 @@ void GameState::initState(const char* state, size_t size) {
   for ( ; data < max_data; data += 2) {
     int x = ntohl(*data);
     int y = ntohl(*(data + 1));
-    treasures.insert(new Treasure(x, y));
+
+    Treasure *t = new Treasure(x, y);
+    treasures.insert(t);
+    grid[x][y] = t;
   }
 
   data = max_data;
@@ -67,7 +70,9 @@ void GameState::initState(const char* state, size_t size) {
     int p_T = ntohl(*(data + 1));
     int x = ntohl(*(data + 2));
     int y = ntohl(*(data + 3));
+
     players[p_id] = new Player(x, y, p_id, p_T);
+    grid[x][y] = players[p_id];
   }
 }
 
