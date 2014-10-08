@@ -79,6 +79,9 @@ void RemoteServer::loop() {
       buffer.append(buf, len);
     }
 
+    if (!running)
+      return;
+
     if (size == 0 && buffer.size() >= 8) {
       data = (int*) buffer.data();
       head = ntohl(data[0]);

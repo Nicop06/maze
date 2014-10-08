@@ -26,9 +26,12 @@ ServerThread::~ServerThread() {
   if (connect_th.joinable() && connect_th.get_id() != std::this_thread::get_id())
     connect_th.join();
 
-  std::lock_guard<std::mutex> lck(pms_mtx);
-  for (const auto& pair: pms)
+  std::unique_lock<std::mutex> pms_lck(pms_mtx);
+  for (const auto& pair: pms) {
+    pms_lck.unlock();
     delete pair.second;
+    pms_lck.lock();
+  }
 }
 
 void ServerThread::init(const char* port) {
@@ -232,11 +235,11 @@ bool ServerThread::createBackupServer() {
   pms_lck.unlock();
 
   for (const auto& pair: old_pms) {
-    std::unique_lock<std::mutex> pms_lck_bis(pms_mtx);
+    pms_lck.lock();
     auto it = pms.find(pair.first);
     if (it == pms.end())
       continue;
-    pms_lck_bis.unlock();
+    pms_lck.unlock();
 
     new_srv_created = false;
     pair.second->createBackupServer();

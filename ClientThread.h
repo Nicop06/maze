@@ -61,7 +61,6 @@ class ClientThread {
 
     std::mutex update_mtx;
 
-    void init();
     void _delServer(RemoteServer* srv);
     void createBackups();
 };
