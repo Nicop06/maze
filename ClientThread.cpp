@@ -94,6 +94,7 @@ void ClientThread::_delServer(RemoteServer* serv) {
 }
 
 const ServerThread* ClientThread::startServer(int N, const char* state, size_t size) {
+  std::lock_guard<std::mutex> st_lck(st_mutex);
   if (!st) {
     try {
       st = new ServerThread(N, 0, *this);
@@ -113,11 +114,13 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
 }
 
 void ClientThread::stopServer() {
+  std::lock_guard<std::mutex> st_lck(st_mutex);
   delete st;
   st = NULL;
 }
 
 void ClientThread::createBackups() {
+  std::lock_guard<std::mutex> st_lck(st_mutex);
   if (!st)
     return;
 
@@ -141,6 +144,7 @@ void ClientThread::stop() {
 }
 
 void ClientThread::move(char dir) {
+  std::lock_guard<std::mutex> st_lck(st_mutex);
   if (pGameState && st) {
     syncMove(id, dir);
     const std::string state = pGameState->getState();

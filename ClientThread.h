@@ -43,6 +43,7 @@ class ClientThread {
     ClientView* view;
     ServerThread* st;
     std::set<RemoteServer*> servers;
+    std::mutex st_mutex;
     std::mutex servers_mtx;
 
     std::atomic<int> id;
