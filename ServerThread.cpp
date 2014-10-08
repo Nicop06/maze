@@ -37,9 +37,8 @@ ServerThread::~ServerThread() {
   }
 
   std::unique_lock<std::mutex> pms_lck(pms_mtx);
-  for (const auto& pair: pms) {
+  for (const auto& pair: pms)
     delete pair.second;
-  }
   pms.clear();
 }
 

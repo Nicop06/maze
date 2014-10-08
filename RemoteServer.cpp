@@ -78,6 +78,7 @@ void RemoteServer::loop() {
   while (running) {
     if (poll(&pfd, 1, 100) > 0) {
       if ((len = recv(sockfd, buf, BUFSIZE, MSG_DONTWAIT)) <= 0) {
+        running = false;
         ct.delServer(this);
         return;
       }
@@ -103,8 +104,11 @@ void RemoteServer::loop() {
           ct.update(buffer.data() + 8, size);
           break;
         case CREATE_SERVER:
-          if (!createServer(ntohl(data[0]), buffer.data() + 12, size - 4))
+          if (!createServer(ntohl(data[0]), buffer.data() + 12, size - 4)) {
+            running = false;
             ct.delServer(this);
+            return;
+          }
           break;
         case NEW_SERVER:
           newServer(buffer.data() + 8, buffer.data() + buffer.find('\0', 8) + 1);

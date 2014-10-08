@@ -25,9 +25,12 @@ ClientThread::~ClientThread() {
   stopServer();
 
   std::unique_lock<std::mutex> serv_lck(servers_mtx);
-  for (RemoteServer* serv : servers) {
+  std::set<RemoteServer*> servers_bis;
+  servers_bis.swap(servers);
+  serv_lck.unlock();
+
+  for (RemoteServer* serv : servers_bis)
     delete serv;
-  }
   servers.clear();
 }
 
@@ -116,9 +119,11 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
 
 void ClientThread::stopServer() {
   std::lock_guard<std::mutex> st_lck(st_mutex);
+  std::lock_guard<std::mutex> state_lck(state_mtx);
   delete st;
   st = NULL;
   pGameState = NULL;
+  state_owner = false;
 }
 
 void ClientThread::createBackups() {
@@ -219,8 +224,9 @@ bool ClientThread::releaseState() {
 }
 
 void ClientThread::stateAcquired(bool acquired) {
-  std::lock_guard<std::mutex> lck(state_mtx);
-  if (state_owner)
+  std::lock_guard<std::mutex> state_lck(state_mtx);
+  std::lock_guard<std::mutex> st_lck(st_mutex);
+  if (state_owner || !st)
     return;
 
   if (acquired)
