@@ -31,7 +31,7 @@ class RemoteServer {
     std::mutex sock_mtx;
 
     void loop();
-    void createServer(int N, const char* state, size_t size);
+    bool createServer(int N, const char* state, size_t size);
     void newServer(const char* host, const char* port);
     bool sendMsg(const std::string& msg, bool eos = true);
     bool playerMoved();

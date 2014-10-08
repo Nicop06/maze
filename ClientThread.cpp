@@ -27,7 +27,8 @@ ClientThread::~ClientThread() {
   st_mutex.unlock();
 
   std::unique_lock<std::mutex> serv_lck(servers_mtx);
-  for (const RemoteServer* serv: servers) {
+  for (RemoteServer* serv: servers) {
+    servers.erase(serv);
     serv_lck.unlock();
     delete serv;
     serv_lck.lock();

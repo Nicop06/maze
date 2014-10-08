@@ -10,6 +10,7 @@
 #include "RemoteServer.h"
 #include "ServerThread.h"
 
+#include <iostream>
 RemoteServer::~RemoteServer() {
   if (running) {
     running = false;
@@ -98,7 +99,8 @@ void RemoteServer::loop() {
           ct.update(buffer.data() + 8, size);
           break;
         case CREATE_SERVER:
-          createServer(ntohl(data[0]), buffer.data() + 12, size - 4);
+          if (!createServer(ntohl(data[0]), buffer.data() + 12, size - 4))
+            ct.delServer(this);
           break;
         case NEW_SERVER:
           newServer(buffer.data() + 8, buffer.data() + buffer.find('\0', 8) + 1);
@@ -149,7 +151,7 @@ bool RemoteServer::connectSrv(int id) {
   return sendMsg(msg);
 }
 
-void RemoteServer::createServer(int N, const char* state, size_t size) {
+bool RemoteServer::createServer(int N, const char* state, size_t size) {
   const ServerThread* st = ct.startServer(N, state, size);
   std::string msg = "server";
   msg += '\0';
@@ -158,8 +160,7 @@ void RemoteServer::createServer(int N, const char* state, size_t size) {
   msg += st ? st->getPort() : "";
 
   // Send the new backup server address and port to the main server
-  if (!sendMsg(msg))
-    ct.delServer(this);
+  return sendMsg(msg);
 }
 
 void RemoteServer::newServer(const char* host, const char* port) {
