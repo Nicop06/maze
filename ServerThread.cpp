@@ -20,10 +20,10 @@ ServerThread::ServerThread(int N, int M, ClientThread& client) : gameState(N, M)
 ServerThread::~ServerThread() {
   running = false;
 
-  if (loop_th.joinable())
+  if (loop_th.joinable() && loop_th.get_id() != std::this_thread::get_id())
     loop_th.join();
 
-  if (connect_th.joinable())
+  if (connect_th.joinable() && connect_th.get_id() != std::this_thread::get_id())
     connect_th.join();
 
   std::lock_guard<std::mutex> lck(pms_mtx);
@@ -116,7 +116,7 @@ void ServerThread::acceptClients() {
     }
 
     if (timeout != -1)
-      timeout = TIMEOUT - (std::chrono::duration_cast<std::chrono::duration<double>>
+      timeout = INIT_TIMEOUT - (std::chrono::duration_cast<std::chrono::duration<double>>
         (std::chrono::steady_clock::now() - begin).count());
   }
 
@@ -138,17 +138,27 @@ void ServerThread::connectClientsLoop() {
   pfd_listen.fd = sockfd;
   pfd_listen.events = POLLIN;
 
+  double elapsed = 0;
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
   do {
     if (poll(&pfd_listen, 1, 100) > 0) {
       acceptClient(-1);
     }
 
+    elapsed = (std::chrono::duration_cast<std::chrono::duration<double>>
+      (std::chrono::steady_clock::now() - begin).count());
+
     std::lock_guard<std::mutex> lck(pms_mtx);
     nb_players = std::max(gameState.getNbPlayers() - 1, 0);
     pms_size = pms.size();
-  } while (running && pms_size < nb_players);
+  } while (running && pms_size < nb_players && elapsed <= CONNECT_TIMEOUT);
 
   close(sockfd);
+
+  // Stop server if no connection made within timeout
+  if (elapsed > CONNECT_TIMEOUT)
+    ct.stopServer();
 }
 
 void ServerThread::acceptClient(int id) {

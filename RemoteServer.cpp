@@ -141,7 +141,7 @@ bool RemoteServer::join() {
 
 bool RemoteServer::connectSrv(int id) {
   std::string msg = "connect";
-  int nId = ntohl(id);
+  int nId = htonl(id);
   msg.append((char*) &nId, 4);
   return sendMsg(msg);
 }

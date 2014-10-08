@@ -26,6 +26,7 @@ class ClientThread {
     void addServer(RemoteServer* serv, bool join = false);
     void delServer(RemoteServer* serv);
     const ServerThread* startServer(int N, const char* state, size_t size);
+    void stopServer();
 
     // Actions
     void move(char dir);

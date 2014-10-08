@@ -94,7 +94,7 @@ void PlayerManager::processMessage() {
         }
       } else if (joined && cmd.compare(0, 7, "connect") && tmp.length() > old_pos + 12 && tmp[old_pos + 12] == '\0') {
         int* p_id = (int*)(tmp.data() + old_pos + 7);
-        this->id = *p_id;
+        this->id = ntohl(*p_id);
         pos = old_pos + 12;
         nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
       }

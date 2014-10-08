@@ -112,6 +112,11 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
   return NULL;
 }
 
+void ClientThread::stopServer() {
+  delete st;
+  st = NULL;
+}
+
 void ClientThread::createBackups() {
   if (!st)
     return;

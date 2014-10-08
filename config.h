@@ -8,9 +8,10 @@
 #define PORT_END   3500
 
 #define BACKLOG 10
-#define TIMEOUT 20
+#define INIT_TIMEOUT 20
 #define LOCK_TIMEOUT 2
 #define BACKUP_TIMEOUT 5
+#define CONNECT_TIMEOUT 5
 #define NB_BACKUP 1
 
 #define MAXSIZE 100
