@@ -6,6 +6,7 @@
 
 #include <thread>
 #include <atomic>
+#include <mutex>
 
 class RemoteServer {
   public:
@@ -27,6 +28,7 @@ class RemoteServer {
 
     std::atomic<bool> running;
     int sockfd;
+    std::mutex sock_mtx;
 
     void loop();
     void createServer(int N, const char* state, size_t size);

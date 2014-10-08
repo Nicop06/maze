@@ -193,6 +193,7 @@ void PlayerManager::sendMsg(const std::string& msg) {
   size_t len = msg.size();
   const char* p = msg.data();
 
+  std::lock_guard<std::mutex> sock_lck(sock_mtx);
   while ((n = send(sockfd, p, len, 0)) > 0) {
     p += n;
     len -= n;

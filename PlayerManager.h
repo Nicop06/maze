@@ -24,6 +24,7 @@ class PlayerManager
 
   private:
     int sockfd;
+    std::mutex sock_mtx;
     std::atomic<bool> joined;
     std::atomic<int> id;
 
