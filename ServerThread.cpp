@@ -136,7 +136,7 @@ void ServerThread::connectClients() {
 }
 
 void ServerThread::connectClientsLoop() {
-  size_t nb_players, pms_size;
+  size_t nb_players, pms_size(0);
   struct pollfd pfd_listen;
 
   pfd_listen.fd = sockfd;
@@ -150,8 +150,12 @@ void ServerThread::connectClientsLoop() {
       acceptClient(-1);
     }
 
-    elapsed = (std::chrono::duration_cast<std::chrono::duration<double>>
-      (std::chrono::steady_clock::now() - begin).count());
+    if (pms_size < 1) {
+      elapsed = (std::chrono::duration_cast<std::chrono::duration<double>>
+        (std::chrono::steady_clock::now() - begin).count());
+    } else {
+      elapsed = 0;
+    }
 
     std::lock_guard<std::mutex> lck(pms_mtx);
     nb_players = std::max(gameState.getNbPlayers() - 1, 0);
@@ -178,7 +182,7 @@ void ServerThread::acceptClient(int id) {
 
   PlayerManager *pm = NULL;
   try {
-    pm = new PlayerManager(pfd.fd, gameState, *this);
+    pm = new PlayerManager(pfd.fd, gameState, *this, ct);
     pm->start(id);
     std::lock_guard<std::mutex> lck(pms_mtx);
     pms[pfd.fd] = pm;
@@ -204,7 +208,7 @@ void ServerThread::loop() {
         if (it != pms.end()) {
           PlayerManager* pm = it->second;
           if ((len = recv(fds[i].fd, buf, BUFSIZE, MSG_DONTWAIT)) == -1) {
-            running = false;
+            ct.stopServer();
             return;
           }
 
@@ -212,7 +216,7 @@ void ServerThread::loop() {
             delete pm;
             pms.erase(fds[i].fd);
             if (pms.size() == 0) {
-              running = false;
+              ct.stopServer();
               return;
             }
           }
@@ -267,6 +271,7 @@ void ServerThread::newServer(const PlayerManager* pm, const std::string& host, c
       ct.addServer(serv);
       new_srv_created = true;
     } catch (const std::string& e) {
+      std::cerr << "Error: " << e << std::endl;
     }
   }
 
@@ -280,8 +285,4 @@ void ServerThread::newServer(const PlayerManager* pm, const std::string& host, c
         pair.second->sendNewServer(host, port);
     }
   }
-}
-
-void ServerThread::syncMove(int id, char dir) {
-  ct.syncMove(id, dir);
 }
