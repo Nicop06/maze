@@ -76,7 +76,6 @@ void PlayerManager::processMessage() {
     old_pos = 0;
 
     while ((pos = tmp.find('\0', old_pos)) != std::string::npos) {
-
       cmd.append(tmp, old_pos, pos - old_pos);
 
       if (cmd == "exit") {
@@ -92,16 +91,21 @@ void PlayerManager::processMessage() {
         } else if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W" || cmd == "NoMove") {
           move(cmd);
         }
-      } else if (joined && cmd.compare(0, 7, "connect") && tmp.length() > old_pos + 12 && tmp[old_pos + 12] == '\0') {
-        int* p_id = (int*)(tmp.data() + old_pos + 7);
-        this->id = ntohl(*p_id);
-        pos = old_pos + 12;
-        nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
+      } else if (cmd.compare(0, 7, "connect") == 0) {
+        if (tmp.length() < old_pos + 12)
+          break;
+
+        if (tmp[old_pos + 11] == '\0') {
+          int* p_id = (int*)(tmp.data() + old_pos + 7);
+          this->id = ntohl(*p_id);
+          pos = old_pos + 11;
+          nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
+        }
       }
 
       if (cmd == "server") {
         if (nb_msg < 3)
-          continue;
+          break;
 
         std::string host, port;
         old_pos = pos + 1;
