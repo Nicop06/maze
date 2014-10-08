@@ -22,17 +22,13 @@ ClientThread::ClientThread() : st(NULL), id(-1),
 ClientThread::~ClientThread() {
   delete view;
 
-  st_mutex.lock();
-  delete st;
-  st_mutex.unlock();
+  stopServer();
 
   std::unique_lock<std::mutex> serv_lck(servers_mtx);
-  for (RemoteServer* serv: servers) {
-    servers.erase(serv);
-    serv_lck.unlock();
+  for (RemoteServer* serv : servers) {
     delete serv;
-    serv_lck.lock();
   }
+  servers.clear();
 }
 
 void ClientThread::init(RemoteServer* serv) {
@@ -64,7 +60,7 @@ void ClientThread::loop() {
 }
 
 void ClientThread::addServer(RemoteServer* serv, bool join) {
-  if (serv != NULL) {
+  if (serv != NULL && running) {
     bool ret;
     if (join) {
       ret = serv->join();

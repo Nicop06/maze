@@ -20,19 +20,27 @@ ServerThread::ServerThread(int N, int M, ClientThread& client) : gameState(N, M)
 ServerThread::~ServerThread() {
   running = false;
 
-  if (loop_th.joinable() && loop_th.get_id() != std::this_thread::get_id())
-    loop_th.join();
+  if (loop_th.joinable()) {
+    if (loop_th.get_id() != std::this_thread::get_id()) {
+      loop_th.join();
+    } else {
+      loop_th.detach();
+    }
+  }
 
-  if (connect_th.joinable() && connect_th.get_id() != std::this_thread::get_id())
-    connect_th.join();
+  if (connect_th.joinable()) {
+    if (connect_th.get_id() != std::this_thread::get_id()) {
+      connect_th.join();
+    } else {
+      connect_th.detach();
+    }
+  }
 
   std::unique_lock<std::mutex> pms_lck(pms_mtx);
   for (const auto& pair: pms) {
-    pms.erase(pair.first);
-    pms_lck.unlock();
     delete pair.second;
-    pms_lck.lock();
   }
+  pms.clear();
 }
 
 void ServerThread::init(const char* port) {

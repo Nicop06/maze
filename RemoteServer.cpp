@@ -16,8 +16,13 @@ RemoteServer::~RemoteServer() {
     sendMsg("exit");
   }
 
-  if (loop_th.joinable() && loop_th.get_id() != std::this_thread::get_id())
-    loop_th.join();
+  if (loop_th.joinable()) {
+    if (loop_th.get_id() != std::this_thread::get_id()) {
+      loop_th.join();
+    } else {
+      loop_th.detach();
+    }
+  }
 
   close(sockfd);
 }
