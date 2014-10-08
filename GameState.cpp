@@ -98,18 +98,13 @@ void GameState::initTreasures() {
   }
 }
 
-void GameState::move(int id, char dir, GameState::callback synchronize) {
+void GameState::move(int id, char dir) {
+  std::unique_lock<std::mutex> lck(state_mutex);
   auto it = players.find(id);
   if (it == players.end())
     return;
 
   Player *player = it->second;
-
-  std::lock_guard<std::mutex> lck(state_mutex);
-
-  if (synchronize)
-    synchronize();
-
   int new_x(player->x), new_y(player->y);
 
   switch(dir) {

@@ -10,8 +10,8 @@
 #define BACKLOG 10
 #define INIT_TIMEOUT 20
 #define LOCK_TIMEOUT 2
-#define BACKUP_TIMEOUT 5
-#define CONNECT_TIMEOUT 5
+#define BACKUP_TIMEOUT 3
+#define CONNECT_TIMEOUT 3
 #define NB_BACKUP 1
 
 #define MAXSIZE 100
@@ -21,7 +21,11 @@
 #define UPDATE_STATE    -2
 #define CREATE_SERVER   -3
 #define NEW_SERVER      -4
-#define MOVE_PLAYER     -5
-#define PLAYER_MOVED    -6
+#define PLAYER_MOVED    -5
+#define STATE_ACQUIRED  -6
+#define NOT_OWNER       -7
+
+#define MOVE_PLAYER     "move_player"
+#define REQUEST_STATE   "req_state"
 
 #endif

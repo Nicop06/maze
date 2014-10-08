@@ -10,7 +10,6 @@
 #include "RemoteServer.h"
 #include "ServerThread.h"
 
-#include <iostream>
 RemoteServer::~RemoteServer() {
   if (running) {
     running = false;
@@ -105,13 +104,14 @@ void RemoteServer::loop() {
         case NEW_SERVER:
           newServer(buffer.data() + 8, buffer.data() + buffer.find('\0', 8) + 1);
           break;
-        case MOVE_PLAYER:
-          ct.movePlayer(ntohl(data[0]), buffer[12]);
-          if (!playerMoved())
-            ct.delServer(this);
-          break;
         case PLAYER_MOVED:
           ct.moveDone();
+          break;
+        case STATE_ACQUIRED:
+          ct.stateAcquired(true);
+          break;
+        case NOT_OWNER:
+          ct.stateAcquired(false);
           break;
       }
 
@@ -146,7 +146,7 @@ bool RemoteServer::join() {
 
 bool RemoteServer::connectSrv(int id) {
   std::string msg = "connect";
-  int nId = htonl(id);
+  uint32_t nId = htonl(id);
   msg.append((char*) &nId, 4);
   return sendMsg(msg);
 }
@@ -178,31 +178,21 @@ void RemoteServer::newServer(const char* host, const char* port) {
 }
 
 bool RemoteServer::movePlayer(int id, char dir) {
-  std::string msg;
-  int head = htonl(MOVE_PLAYER);
-  int size = htonl(5);
-  int n_id = htonl(id);
-  msg.append((char*) &head, 4);
-  msg.append((char*) &size, 4);
-  msg.append((char*) &n_id, 4);
+  std::string msg = MOVE_PLAYER;
   msg += dir;
+  uint32_t n_id = htonl(id);
+  msg.append((char*) &n_id, 4);
 
-  return sendMsg(msg, false);
+  return sendMsg(msg);
 }
 
-bool RemoteServer::playerMoved() {
-  std::string msg;
-  int head = htonl(PLAYER_MOVED);
-  int size = htonl(0);
-  msg.append((char*) &head, 4);
-  msg.append((char*) &size, 4);
-
-  return sendMsg(msg, false);
+bool RemoteServer::requestStateOwnership() {
+  return sendMsg(REQUEST_STATE);
 }
 
-bool RemoteServer::sendMsg(const std::string& msg, bool eos) {
+bool RemoteServer::sendMsg(const std::string& msg) {
   ssize_t n;
-  size_t len = msg.size() + (eos ? 1 : 0);
+  size_t len = msg.size() + 1;
   const char* p = msg.data();
 
   std::lock_guard<std::mutex> sock_lck(sock_mtx);

@@ -14,8 +14,6 @@ class Treasure;
 
 class GameState {
   public:
-    typedef std::function<void(void)> callback;
-
     GameState(int N, int M);
     ~GameState();
 
@@ -25,7 +23,7 @@ class GameState {
     bool addPlayer(int id);
     void removePlayer(int id);
 
-    void move(int id, char dir, callback synchronize = NULL);
+    void move(int id, char dir);
 
     std::string getState();
     int getSize() const;

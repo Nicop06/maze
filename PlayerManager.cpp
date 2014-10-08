@@ -8,8 +8,8 @@
 #include <iostream>
 #include <cstring>
 
-PlayerManager::PlayerManager(int sockfd, GameState& gameState, ServerThread& st)
-  : sockfd(sockfd), joined(false), id(-1), gameState(gameState), st(st), nb_msg(0), running(false) {
+PlayerManager::PlayerManager(int sockfd, GameState& gameState, ServerThread& st, ClientThread& ct)
+  : sockfd(sockfd), joined(false), id(-1), gameState(gameState), st(st), ct(ct), nb_msg(0), running(false) {
 }
 
 PlayerManager::~PlayerManager() {
@@ -85,9 +85,11 @@ void PlayerManager::processMessage() {
       }
 
       if (id >= 0) {
-        if (cmd == "join" && !joined) {
-          join();
-          joined = true;
+        if (cmd == "join") {
+          if (!joined) {
+            join();
+            joined = true;
+          }
         } else if (cmd == "S" || cmd == "E" || cmd == "N" || cmd == "W" || cmd == "NoMove") {
           move(cmd);
         }
@@ -118,6 +120,24 @@ void PlayerManager::processMessage() {
 
         st.newServer(this, host, port);
         nb_msg -= 2;
+      } else if (cmd.compare(0, sizeof(MOVE_PLAYER) - 1, MOVE_PLAYER) == 0) {
+        if (tmp.length() < old_pos + sizeof(MOVE_PLAYER) + 4)
+          break;
+
+        char dir = tmp[old_pos + sizeof(MOVE_PLAYER) - 1];
+        int* p_id = (int*)(tmp.data() + old_pos + sizeof(MOVE_PLAYER));
+        ct.movePlayer(ntohl(*p_id), dir);
+        sendHead(PLAYER_MOVED);
+
+        pos = old_pos + sizeof(MOVE_PLAYER) + 3;
+        nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
+
+      } else if (cmd == REQUEST_STATE) {
+        if (ct.releaseState()) {
+          sendHead(STATE_ACQUIRED);
+        } else {
+          sendHead(NOT_OWNER);
+        }
       }
 
       nb_msg--;
@@ -147,7 +167,7 @@ void PlayerManager::join() {
 
 void PlayerManager::move(const std::string& cmd) {
   if (cmd != "NoMove")
-    st.syncMove(id, cmd[0]);
+    ct.syncMove(id, cmd[0]);
 
   sendState(htonl(UPDATE_STATE));
 }
@@ -165,12 +185,19 @@ void PlayerManager::sendState(uint32_t head, bool send_size) {
   msg.append((char*) &size, 4);
 
   if (send_size) {
-    int N = htonl(gameState.getSize());
+    uint32_t N = htonl(gameState.getSize());
     msg.append((char*) &N, 4);
   }
 
   msg += state;
 
+  sendMsg(msg);
+}
+
+void PlayerManager::sendHead(uint32_t head) {
+  std::string msg;
+  uint32_t n_head = ntohl(head);
+  msg.append((char*) &n_head, 4);
   sendMsg(msg);
 }
 

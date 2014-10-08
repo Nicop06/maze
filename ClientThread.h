@@ -31,8 +31,11 @@ class ClientThread {
     // Actions
     void move(char dir);
     void movePlayer(int id, char dir);
+
+    // Sync actions
+    bool releaseState();
+    void stateAcquired(bool acquired);
     void syncMove(int id, char dir);
-    void sendSyncMove(int id, char dir);
     void moveDone();
 
     void update(const char* state, size_t size);
@@ -59,10 +62,15 @@ class ClientThread {
     std::condition_variable cv_sync;
     std::mutex sync_mtx;
 
-    std::mutex update_mtx;
+    std::atomic<bool> state_owner;
+    std::atomic<int> nb_owner;
+    std::mutex state_mtx;
+    std::condition_variable cv_state;
 
     void _delServer(RemoteServer* srv);
     void createBackups();
+    void _syncMove(int id, char dir);
+    void sendSyncMove(int id, char dir);
 };
 
 #endif

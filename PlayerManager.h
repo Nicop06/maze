@@ -8,12 +8,13 @@
 #include <string>
 
 #include "ServerThread.h"
+#include "ClientThread.h"
 #include "GameState.h"
 
 class PlayerManager
 {
   public:
-    PlayerManager(int sockfd, GameState& gameState, ServerThread& st);
+    PlayerManager(int sockfd, GameState& gameState, ServerThread& st, ClientThread& ct);
     ~PlayerManager();
 
     void start(int playerId = -1);
@@ -30,6 +31,7 @@ class PlayerManager
 
     GameState& gameState;
     ServerThread& st;
+    ClientThread& ct;
 
     std::string buffer;
 
@@ -45,6 +47,7 @@ class PlayerManager
     void join();
     void move(const std::string& cmd);
     void sendState(uint32_t head, bool send_size = false);
+    void sendHead(uint32_t head);
     void sendMsg(const std::string& msg);
 };
 
