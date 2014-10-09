@@ -152,8 +152,10 @@ int ClientViewNcurses::update(const char* state, const size_t size) {
     int x = ntohl(*(data + 2));
     int y = ntohl(*(data + 3));
 
-    if (p_T > best_score)
+    if (p_T > best_score) {
       best_id = p_id;
+      best_score = p_T;
+    }
 
     if (p_id != id) {
       mvwprintw(main_win, ++status_y, begx+1, "Player %d: %d", p_id, p_T);
