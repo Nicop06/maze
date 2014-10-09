@@ -29,7 +29,8 @@ void PlayerManager::start(int playerId) {
   if (!running && created) {
     running = true;
 
-    std::cout << "Connection with client " << playerId << std::endl;
+    if (playerId >= 0)
+      std::cout << "Connection with client " << playerId << std::endl;
 
     msg_thread = std::thread(&PlayerManager::processMessage, this);
   } else {
@@ -102,6 +103,7 @@ void PlayerManager::processMessage() {
           this->id = ntohl(*p_id);
           pos = old_pos + 11;
           nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
+          std::cout << "Connection with client " << this->id << std::endl;
         }
       }
 
