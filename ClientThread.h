@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "ClientView.h"
+#include "read_write_mutex.h"
 
 #include <poll.h>
 #include <condition_variable>
@@ -47,6 +48,7 @@ class ClientThread {
     ServerThread* st;
     std::set<RemoteServer*> servers;
     std::mutex servers_mtx;
+    read_write_mutex st_mtx;
 
     std::atomic<int> id;
     std::atomic<bool> initialized;

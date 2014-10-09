@@ -144,7 +144,7 @@ void ServerThread::connectClients() {
 }
 
 void ServerThread::connectClientsLoop() {
-  size_t nb_players, pms_size(0);
+  size_t nb_players, nb_accepted(0);
   struct pollfd pfd_listen;
 
   pfd_listen.fd = sockfd;
@@ -156,19 +156,18 @@ void ServerThread::connectClientsLoop() {
   do {
     if (poll(&pfd_listen, 1, 100) > 0) {
       acceptClient(-1);
+      ++nb_accepted;
     }
 
-    if (pms_size < 1) {
+    if (nb_accepted < 1) {
       elapsed = (std::chrono::duration_cast<std::chrono::duration<double>>
         (std::chrono::steady_clock::now() - begin).count());
     } else {
       elapsed = 0;
     }
 
-    std::lock_guard<std::mutex> lck(pms_mtx);
     nb_players = std::max(gameState.getNbPlayers() - 1, 0);
-    pms_size = pms.size();
-  } while (running && pms_size < nb_players && elapsed <= CONNECT_TIMEOUT);
+  } while (running && nb_accepted < nb_players && elapsed <= CONNECT_TIMEOUT);
 
   close(sockfd);
 

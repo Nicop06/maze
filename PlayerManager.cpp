@@ -95,16 +95,14 @@ void PlayerManager::processMessage() {
           move(cmd);
         }
       } else if (cmd.compare(0, 7, "connect") == 0) {
-        if (tmp.length() < old_pos + 12)
+        if (tmp.length() < old_pos + 12 || tmp[old_pos + 11] != '\0')
           break;
 
-        if (tmp[old_pos + 11] == '\0') {
-          int* p_id = (int*)(tmp.data() + old_pos + 7);
-          this->id = ntohl(*p_id);
-          pos = old_pos + 11;
-          nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
-          std::cout << "Connection with client " << this->id << std::endl;
-        }
+        int* p_id = (int*)(tmp.data() + old_pos + 7);
+        this->id = ntohl(*p_id);
+        pos = old_pos + 11;
+        nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
+        std::cout << "Connection with client " << this->id << std::endl;
       }
 
       if (cmd == "server") {
@@ -121,7 +119,8 @@ void PlayerManager::processMessage() {
         st.newServer(this, host, port);
         nb_msg--;
       } else if (cmd.compare(0, sizeof(MOVE_PLAYER) - 1, MOVE_PLAYER) == 0) {
-        if (tmp.length() < old_pos + sizeof(MOVE_PLAYER) + 5)
+        if (tmp.length() < old_pos + sizeof(MOVE_PLAYER) + 5
+            || tmp[old_pos + sizeof(MOVE_PLAYER) + 4] != '\0')
           break;
 
         char dir = tmp[old_pos + sizeof(MOVE_PLAYER) - 1];

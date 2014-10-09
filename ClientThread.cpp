@@ -45,12 +45,15 @@ void ClientThread::init(RemoteServer* serv) {
 }
 
 void ClientThread::init(ServerThread* st) {
+  st_mtx.lock_writer();
   if (!this->st) {
     this->st = st;
+    st_mtx.unlock_writer();
     running = true;
     state_owner = true;
     move(-1);
   }
+  st_mtx.unlock_writer();
 }
 
 void ClientThread::loop() {
@@ -102,13 +105,22 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
     ServerThread *st(NULL);
     try {
       st = new ServerThread(N, 0, *this);
+
+      st_mtx.lock_reader();
       if (pGameState)
         pGameState->initState(state, size);
+      st_mtx.unlock_reader();
+
       st->init(NULL);
       st->connectClients();
+
+      st_mtx.lock_writer();
       this->st = st;
+      st_mtx.unlock_writer();
+
       std::lock_guard<std::mutex> state_lck(state_mtx);
       state_owner = false;
+
       return st;
     } catch (const std::string& e) {
       std::cerr << "Error: " << e << std::endl;
@@ -120,11 +132,12 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
 }
 
 void ClientThread::stopServer() {
-  if (!st)
-    return;
+  st_mtx.lock_writer();
   ServerThread* old_st = st;
   st = NULL;
   pGameState = NULL;
+  st_mtx.unlock_writer();
+
   std::unique_lock<std::mutex> state_lck(state_mtx);
   state_owner = false;
   state_lck.unlock();
@@ -133,19 +146,22 @@ void ClientThread::stopServer() {
 }
 
 void ClientThread::createBackups() {
-  if (!st)
-    return;
-
-  std::unique_lock<std::mutex> lck(servers_mtx);
-  while (servers.size() < NB_BACKUP) {
-    lck.unlock();
-    if (!st->createBackupServer()) {
-      std::cerr << "Failed to create backup servers\n";
-      stop();
-      return;
+  st_mtx.lock_reader();
+  if (st) {
+    std::unique_lock<std::mutex> lck(servers_mtx);
+    while (st && servers.size() < NB_BACKUP) {
+      st_mtx.unlock_reader();
+      lck.unlock();
+      if (!st->createBackupServer()) {
+        std::cerr << "Failed to create backup servers\n";
+        stop();
+        return;
+      }
+      lck.lock();
+      st_mtx.lock_reader();
     }
-    lck.lock();
   }
+  st_mtx.unlock_reader();
 }
 
 void ClientThread::stop() {
@@ -156,11 +172,14 @@ void ClientThread::stop() {
 }
 
 void ClientThread::move(char dir) {
+  st_mtx.lock_reader();
   if (pGameState && st) {
     syncMove(id, dir);
     const std::string state = pGameState->getState();
+    st_mtx.unlock_reader();
     update(state.data(), state.size());
   } else {
+    st_mtx.unlock_reader();
     std::lock_guard<std::mutex> lck(servers_mtx);
     if (servers.size() > 0) {
       for (RemoteServer* serv: servers) {
@@ -176,6 +195,7 @@ void ClientThread::move(char dir) {
 
 void ClientThread::syncMove(int id, char dir) {
   std::lock_guard<std::mutex> lck(sync_move_mtx);
+  st_mtx.lock_reader();
   if (pGameState) {
     std::unique_lock<std::mutex> state_lck(state_mtx);
 
@@ -195,6 +215,7 @@ void ClientThread::syncMove(int id, char dir) {
       while (nb_owner > 0 || !state_owner) {
         if (cv_state.wait_for(state_lck, begin - std::chrono::steady_clock::now()
               + std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout) {
+          std::cout << "TIMEOUT\n";
           break;
         }
       }
@@ -206,11 +227,14 @@ void ClientThread::syncMove(int id, char dir) {
     pGameState->move(id, dir);
     sendSyncMove(id, dir);
   }
+  st_mtx.unlock_reader();
 }
 
 void ClientThread::movePlayer(int id, char dir) {
+  st_mtx.lock_reader();
   if (pGameState)
     pGameState->move(id, dir);
+  st_mtx.unlock_reader();
 }
 
 bool ClientThread::releaseState() {
@@ -225,14 +249,15 @@ bool ClientThread::releaseState() {
 
 void ClientThread::stateAcquired(bool acquired) {
   std::lock_guard<std::mutex> state_lck(state_mtx);
-  if (state_owner || !st)
-    return;
+  st_mtx.lock_reader();
+  if (!state_owner && st) {
+    if (acquired)
+      state_owner = true;
 
-  if (acquired)
-    state_owner = true;
-
-  nb_owner--;
-  cv_state.notify_one();
+    nb_owner--;
+    cv_state.notify_one();
+  }
+  st_mtx.unlock_reader();
 }
 
 void ClientThread::sendSyncMove(int id, char dir) {
@@ -277,5 +302,7 @@ void ClientThread::initView(int id, int N) {
 }
 
 void ClientThread::setState(GameState* gameState) {
+  st_mtx.lock_writer();
   pGameState = gameState;
+  st_mtx.unlock_writer();
 }
