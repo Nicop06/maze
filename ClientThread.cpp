@@ -79,6 +79,8 @@ void ClientThread::addServer(RemoteServer* serv, bool join) {
       return;
     }
 
+    std::cout << "Connection to server successful\n";
+
     std::lock_guard<std::mutex> lck(servers_mtx);
     servers.insert(serv);
   }
@@ -121,6 +123,8 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
       std::lock_guard<std::mutex> state_lck(state_mtx);
       state_owner = false;
 
+      std::cout << "Server started\n";
+
       return st;
     } catch (const std::string& e) {
       std::cerr << "Error: " << e << std::endl;
@@ -151,6 +155,9 @@ void ClientThread::createBackups() {
     std::unique_lock<std::mutex> lck(servers_mtx);
     while (st && servers.size() < NB_BACKUP) {
       st_mtx.unlock_reader();
+
+      std::cout << "Chosing new backup server\n";
+
       lck.unlock();
       if (!st->createBackupServer()) {
         std::cerr << "Failed to create backup servers\n";
