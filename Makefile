@@ -6,6 +6,7 @@ EXEC=maze
 SRC=$(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)
 INC=$(wildcard *.h)
+ARC=A0119965_A0119984.zip
 
 all: $(EXEC)
 
@@ -18,6 +19,9 @@ maze: $(OBJ)
 -include *.d
 
 .PHONY: clean mrproper
+
+dist:
+	zip $(ARC) $(SRC) $(INC) Makefile AssignmentOneSubmissionSummary.txt
 
 clean:
 	rm -rf *.o *.d
