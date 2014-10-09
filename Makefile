@@ -27,4 +27,4 @@ clean:
 	rm -rf *.o *.d
 
 mrproper: clean
-	rm -rf $(EXEC)
+	rm -rf $(EXEC) $(ARC)
