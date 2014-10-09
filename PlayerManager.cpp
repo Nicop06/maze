@@ -199,7 +199,9 @@ void PlayerManager::sendState(uint32_t head, bool send_size) {
 void PlayerManager::sendHead(uint32_t head) {
   std::string msg;
   uint32_t n_head = ntohl(head);
+  uint32_t size = ntohl(0);
   msg.append((char*) &n_head, 4);
+  msg.append((char*) &size, 4);
   sendMsg(msg);
 }
 
