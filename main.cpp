@@ -46,5 +46,6 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
+  std::cout << "Game exiting...\n";
   return 0;
 }

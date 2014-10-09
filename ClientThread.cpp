@@ -19,11 +19,10 @@ ClientThread::ClientThread() : st(NULL), id(-1),
   view = new ClientViewNcurses(*this);
 }
 
-ClientThread::~ClientThread() {
-  delete view;
-
+ClientThread::~ClientThread() {  std::cout << "st\n";
   stopServer();
 
+  std::cout << "servers\n";
   std::unique_lock<std::mutex> serv_lck(servers_mtx);
   std::set<RemoteServer*> servers_bis;
   servers_bis.swap(servers);
@@ -32,6 +31,8 @@ ClientThread::~ClientThread() {
   for (RemoteServer* serv : servers_bis)
     delete serv;
   servers.clear();
+
+  delete view;
 }
 
 void ClientThread::init(RemoteServer* serv) {
@@ -118,12 +119,18 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
 }
 
 void ClientThread::stopServer() {
-  std::lock_guard<std::mutex> st_lck(st_mutex);
-  std::lock_guard<std::mutex> state_lck(state_mtx);
-  delete st;
+  std::unique_lock<std::mutex> st_lck(st_mutex);
+  if (!st)
+    return;
+  ServerThread* old_st = st;
   st = NULL;
   pGameState = NULL;
+  std::unique_lock<std::mutex> state_lck(state_mtx);
   state_owner = false;
+  st_lck.unlock();
+  state_lck.unlock();
+
+  delete old_st;
 }
 
 void ClientThread::createBackups() {
