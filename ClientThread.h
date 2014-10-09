@@ -46,7 +46,6 @@ class ClientThread {
     ClientView* view;
     ServerThread* st;
     std::set<RemoteServer*> servers;
-    std::mutex st_mutex;
     std::mutex servers_mtx;
 
     std::atomic<int> id;
@@ -61,6 +60,7 @@ class ClientThread {
     std::atomic<int> nb_sync;
     std::condition_variable cv_sync;
     std::mutex sync_mtx;
+    std::mutex sync_move_mtx;
 
     std::atomic<bool> state_owner;
     std::atomic<int> nb_owner;
@@ -69,7 +69,6 @@ class ClientThread {
 
     void _delServer(RemoteServer* srv);
     void createBackups();
-    void _syncMove(int id, char dir);
     void sendSyncMove(int id, char dir);
 };
 

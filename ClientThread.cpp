@@ -98,21 +98,21 @@ void ClientThread::_delServer(RemoteServer* serv) {
 }
 
 const ServerThread* ClientThread::startServer(int N, const char* state, size_t size) {
-  std::unique_lock<std::mutex> st_lck(st_mutex);
   if (!st) {
+    ServerThread *st(NULL);
     try {
       st = new ServerThread(N, 0, *this);
       if (pGameState)
         pGameState->initState(state, size);
       st->init(NULL);
       st->connectClients();
+      this->st = st;
       std::lock_guard<std::mutex> state_lck(state_mtx);
       state_owner = false;
       return st;
     } catch (const std::string& e) {
       std::cerr << "Error: " << e << std::endl;
-      st_lck.unlock();
-      stopServer();
+      delete st;
     }
   }
 
@@ -120,7 +120,6 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
 }
 
 void ClientThread::stopServer() {
-  std::unique_lock<std::mutex> st_lck(st_mutex);
   if (!st)
     return;
   ServerThread* old_st = st;
@@ -128,14 +127,12 @@ void ClientThread::stopServer() {
   pGameState = NULL;
   std::unique_lock<std::mutex> state_lck(state_mtx);
   state_owner = false;
-  st_lck.unlock();
   state_lck.unlock();
 
   delete old_st;
 }
 
 void ClientThread::createBackups() {
-  std::lock_guard<std::mutex> st_lck(st_mutex);
   if (!st)
     return;
 
@@ -159,9 +156,8 @@ void ClientThread::stop() {
 }
 
 void ClientThread::move(char dir) {
-  std::lock_guard<std::mutex> st_lck(st_mutex);
   if (pGameState && st) {
-    _syncMove(id, dir);
+    syncMove(id, dir);
     const std::string state = pGameState->getState();
     update(state.data(), state.size());
   } else {
@@ -179,11 +175,7 @@ void ClientThread::move(char dir) {
 }
 
 void ClientThread::syncMove(int id, char dir) {
-  std::lock_guard<std::mutex> lck(st_mutex);
-  _syncMove(id, dir);
-}
-
-void ClientThread::_syncMove(int id, char dir) {
+  std::lock_guard<std::mutex> lck(sync_move_mtx);
   if (pGameState) {
     std::unique_lock<std::mutex> state_lck(state_mtx);
 
@@ -217,7 +209,6 @@ void ClientThread::_syncMove(int id, char dir) {
 }
 
 void ClientThread::movePlayer(int id, char dir) {
-  std::lock_guard<std::mutex> lck(st_mutex);
   if (pGameState)
     pGameState->move(id, dir);
 }
