@@ -234,7 +234,6 @@ bool ClientThread::releaseState() {
 
 void ClientThread::stateAcquired(bool acquired) {
   std::lock_guard<std::mutex> state_lck(state_mtx);
-  std::lock_guard<std::mutex> st_lck(st_mutex);
   if (state_owner || !st)
     return;
 
@@ -259,7 +258,7 @@ void ClientThread::sendSyncMove(int id, char dir) {
   }
   srv_lck.unlock();
 
-  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();;
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
   while (nb_sync > 0) {
     if (cv_sync.wait_for(lck, begin - std::chrono::steady_clock::now()
           + std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout)

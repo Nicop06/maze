@@ -1,6 +1,7 @@
 #include <poll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <cstring>
@@ -58,6 +59,10 @@ void RemoteServer::init(const char* host, const char* port) {
     throw std::string("Couldn't connect to server.");
 
   freeaddrinfo(result);
+
+  int flag = 1;
+  if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*) &flag, sizeof(int)) < 0)
+    throw std::string("Setting TCP_NODELAY option failed.");
 
   running = true;
   loop_th = std::thread(&RemoteServer::loop, this);

@@ -108,7 +108,7 @@ void PlayerManager::processMessage() {
       }
 
       if (cmd == "server") {
-        if (nb_msg < 3)
+        if (nb_msg < 2)
           break;
 
         std::string host, port;
@@ -119,9 +119,9 @@ void PlayerManager::processMessage() {
         host = getHost();
 
         st.newServer(this, host, port);
-        nb_msg -= 2;
+        nb_msg--;
       } else if (cmd.compare(0, sizeof(MOVE_PLAYER) - 1, MOVE_PLAYER) == 0) {
-        if (tmp.length() < old_pos + sizeof(MOVE_PLAYER) + 4)
+        if (tmp.length() < old_pos + sizeof(MOVE_PLAYER) + 5)
           break;
 
         char dir = tmp[old_pos + sizeof(MOVE_PLAYER) - 1];
@@ -129,7 +129,7 @@ void PlayerManager::processMessage() {
         ct.movePlayer(ntohl(*p_id), dir);
         sendHead(PLAYER_MOVED);
 
-        pos = old_pos + sizeof(MOVE_PLAYER) + 3;
+        pos = old_pos + sizeof(MOVE_PLAYER) + 4;
         nb_msg -= std::count(tmp.begin() + old_pos, tmp.begin() + pos, '\0');
 
       } else if (cmd == REQUEST_STATE) {

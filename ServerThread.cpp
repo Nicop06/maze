@@ -5,6 +5,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <cstring>
@@ -181,6 +182,12 @@ void ServerThread::acceptClient(int id) {
   pfd.fd = accept(sockfd, NULL, NULL);
   if (pfd.fd < 0) {
     std::cerr << "Error while accepting client\n";
+    return;
+  }
+
+  int flag = 1;
+  if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*) &flag, sizeof(int)) < 0) {
+    std::cerr <<"Setting TCP_NODELAY option failed.\n";
     return;
   }
 
