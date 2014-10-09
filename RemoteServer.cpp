@@ -94,7 +94,7 @@ void RemoteServer::loop() {
       size = ntohl(data[1]);
     }
 
-    if (size > 0 && buffer.size() >= size + 8) {
+    if (buffer.size() >= size + 8) {
       data = (int*) (buffer.data() + 8);
       switch (head) {
         case INIT_CLIENT:

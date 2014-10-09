@@ -106,6 +106,8 @@ const ServerThread* ClientThread::startServer(int N, const char* state, size_t s
         pGameState->initState(state, size);
       st->init(NULL);
       st->connectClients();
+      std::lock_guard<std::mutex> state_lck(state_mtx);
+      state_owner = false;
       return st;
     } catch (const std::string& e) {
       std::cerr << "Error: " << e << std::endl;
@@ -197,11 +199,12 @@ void ClientThread::_syncMove(int id, char dir) {
       }
       srv_lck.unlock();
 
-      std::chrono::steady_clock::time_point begin;
+      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
       while (nb_owner > 0 || !state_owner) {
         if (cv_state.wait_for(state_lck, begin - std::chrono::steady_clock::now()
-              + std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout)
+              + std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout) {
           break;
+        }
       }
 
       nb_owner = 0;
@@ -256,7 +259,7 @@ void ClientThread::sendSyncMove(int id, char dir) {
   }
   srv_lck.unlock();
 
-  std::chrono::steady_clock::time_point begin;
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();;
   while (nb_sync > 0) {
     if (cv_sync.wait_for(lck, begin - std::chrono::steady_clock::now()
           + std::chrono::seconds(LOCK_TIMEOUT)) == std::cv_status::timeout)
