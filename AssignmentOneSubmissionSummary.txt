@@ -3,50 +3,50 @@ Fill in the info and submit the softcopy together with your source code.
 
 ------------------------------------------------------------
 
-What is your demo time slot (e.g., 14:30PM)? Answer: 
+What is your demo time slot (e.g., 14:30PM)? Answer: Saturday, 11 Oct 15:00
 
-What programming language did you use? Answer: 
+What programming language did you use? Answer: C++
 
-Roughly how many lines of code does your system have? Answer: 
+Roughly how many lines of code does your system have? Answer: 2000
 
-Do you use RMI or socket for your system? Answer (RMI/socket):
+Do you use RMI or socket for your system? Answer (RMI/socket): socket
 
 -------------------------------------------------------------
 
 What is Team Member 1's matriculation number (not nusnetid!)? 
 
-Answer: 
+Answer: A0119965
 
 What is Team Member 1's name (exactly as appeared as on IVLE)?
 
-Answer: 
+Answer: Nicolas Pierre Mickael Porcel
 
 How many lines of code did Team Member 1 write for this assignment?
 
-Answer: 
+Answer: 1500
 
 Which part of the assignment did Team Member 1 do?
 
-Answer:
+Answer: GUI + step 2
 
 
 -------------------------------------------------------------
 
 What is Team Member 2's matriculation number (not nusnetid!)?
 
-Answer: 
+Answer: A0119984
 
 What is Team Member 2's name (exactly as appeared as on IVLE)?
 
-Answer: 
+Answer: Croze Elias
 
 How many lines of code did Team Member 2 write for this assignment?
 
-Answer: 
+Answer: 800
 
 Which part of the assignment did Team Member 2 do?
 
-Answer:
+Answer: step 1
 
 
 --------------------------------------------------------------
