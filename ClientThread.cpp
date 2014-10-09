@@ -19,10 +19,9 @@ ClientThread::ClientThread() : st(NULL), id(-1),
   view = new ClientViewNcurses(*this);
 }
 
-ClientThread::~ClientThread() {  std::cout << "st\n";
+ClientThread::~ClientThread() {
   stopServer();
 
-  std::cout << "servers\n";
   std::unique_lock<std::mutex> serv_lck(servers_mtx);
   std::set<RemoteServer*> servers_bis;
   servers_bis.swap(servers);
