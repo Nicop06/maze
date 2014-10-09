@@ -114,11 +114,9 @@ void PlayerManager::processMessage() {
         std::string host, port;
         old_pos = pos + 1;
         pos = tmp.find('\0', old_pos);
-        host = tmp.substr(old_pos, pos - old_pos);
-
-        old_pos = pos + 1;
-        pos = tmp.find('\0', old_pos);
         port = tmp.substr(old_pos, pos - old_pos);
+
+        host = getHost();
 
         st.newServer(this, host, port);
         nb_msg -= 2;
@@ -234,4 +232,23 @@ void PlayerManager::sendMsg(const std::string& msg) {
     std::cerr << "Error while sending message to client " << id << std::endl;
     stop();
   }
+}
+
+const std::string PlayerManager::getHost() const {
+  char host[INET6_ADDRSTRLEN];
+  struct sockaddr_storage addr;
+  socklen_t len = sizeof(addr);
+
+  getpeername(sockfd, (struct sockaddr*)&addr, &len);
+
+  // deal with both IPv4 and IPv6:
+  if (addr.ss_family == AF_INET) {
+    struct sockaddr_in *s = (struct sockaddr_in *) &addr;
+    inet_ntop(AF_INET, &s->sin_addr, host, sizeof(host));
+  } else { // AF_INET6
+    struct sockaddr_in6 *s = (struct sockaddr_in6 *) &addr;
+    inet_ntop(AF_INET6, &s->sin6_addr, host, sizeof(host));
+  }
+
+  return host;
 }

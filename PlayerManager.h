@@ -49,6 +49,7 @@ class PlayerManager
     void sendState(uint32_t head, bool send_size = false);
     void sendHead(uint32_t head);
     void sendMsg(const std::string& msg);
+    const std::string getHost() const;
 };
 
 #endif

@@ -164,8 +164,6 @@ bool RemoteServer::createServer(int N, const char* state, size_t size) {
   const ServerThread* st = ct.startServer(N, state, size);
   std::string msg = "server";
   msg += '\0';
-  msg += st ? getHost() : "";
-  msg += '\0';
   msg += st ? st->getPort() : "";
 
   // Send the new backup server address and port to the main server
@@ -214,23 +212,4 @@ bool RemoteServer::sendMsg(const std::string& msg) {
     return false;
 
   return true;
-}
-
-const std::string RemoteServer::getHost() const {
-  char host[INET6_ADDRSTRLEN];
-  struct sockaddr_storage addr;
-  socklen_t len = sizeof(addr);
-
-  getpeername(sockfd, (struct sockaddr*)&addr, &len);
-
-  // deal with both IPv4 and IPv6:
-  if (addr.ss_family == AF_INET) {
-    struct sockaddr_in *s = (struct sockaddr_in *) &addr;
-    inet_ntop(AF_INET, &s->sin_addr, host, sizeof(host));
-  } else { // AF_INET6
-    struct sockaddr_in6 *s = (struct sockaddr_in6 *) &addr;
-    inet_ntop(AF_INET6, &s->sin6_addr, host, sizeof(host));
-  }
-
-  return host;
 }

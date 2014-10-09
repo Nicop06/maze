@@ -35,7 +35,6 @@ class RemoteServer {
     bool createServer(int N, const char* state, size_t size);
     void newServer(const char* host, const char* port);
     bool sendMsg(const std::string& msg);
-    const std::string getHost() const;
 };
 
 #endif
