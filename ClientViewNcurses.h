@@ -34,6 +34,10 @@ class ClientViewNcurses : public ClientView, public std::streambuf {
     std::atomic<bool> running;
     std::mutex ncurses_mtx;
 
+    // Old buf
+    std::streambuf * old_stdout_buf;
+    std::streambuf * old_stderr_buf;
+
     // The main loop
     void loop();
 };

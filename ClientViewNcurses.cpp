@@ -11,6 +11,9 @@ ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread) : ClientView(cl
 
 ClientViewNcurses::~ClientViewNcurses() {
   if (running) {
+    std::cout.rdbuf(this->old_stdout_buf);
+    std::cerr.rdbuf(this->old_stderr_buf);
+
     running = false;
     nodelay(stdscr, TRUE);
   }
@@ -46,6 +49,8 @@ void ClientViewNcurses::init(int id, int N) {
     if (!main_win || !game_win || !dbg_win)
       return;
 
+    this->old_stdout_buf = std::cout.rdbuf();
+    this->old_stderr_buf = std::cerr.rdbuf();
     this->setp(0, 0);
     this->setg(0, 0, 0);
     std::cout.rdbuf(this);
