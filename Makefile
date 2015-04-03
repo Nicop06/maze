@@ -1,6 +1,6 @@
 CXX=g++
 DEBUG=-g3
-CXXFLAGS+=${DEBUG} -O3 -Wall -Wextra -c -std=gnu++11 -pthread
+CXXFLAGS+=${DEBUG} -Wall -Wextra -c -std=gnu++11 -pthread
 LDFLAGS+=-std=gnu++11 -pthread -lncurses
 EXEC=maze
 SRC=$(wildcard *.cpp)
