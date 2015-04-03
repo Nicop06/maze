@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <arpa/inet.h>
 
 ClientViewNcurses::ClientViewNcurses(ClientThread& clientThread) : ClientView(clientThread),
   N(0), main_win(NULL), game_win(NULL), dbg_win(NULL), running(false) {

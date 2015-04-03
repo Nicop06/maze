@@ -17,7 +17,7 @@ class GameState;
 
 class ClientThread {
   public:
-    ClientThread();
+    ClientThread(bool fake);
     ~ClientThread();
     void init(ServerThread* st);
     void init(RemoteServer* serv);

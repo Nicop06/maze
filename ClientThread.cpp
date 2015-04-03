@@ -11,12 +11,17 @@
 #include "ClientThread.h"
 #include "ServerThread.h"
 #include "RemoteServer.h"
+#include "ClientViewFake.h"
 #include "ClientViewNcurses.h"
 #include "GameState.h"
 
-ClientThread::ClientThread() : st(NULL), id(-1),
+ClientThread::ClientThread(bool fake) : st(NULL), id(-1),
   initialized(false), pGameState(NULL), running(false), state_owner(false) {
-  view = new ClientViewNcurses(*this);
+  if (fake) {
+    view = new ClientViewFake(*this);
+  } else {
+    view = new ClientViewNcurses(*this);
+  }
 }
 
 ClientThread::~ClientThread() {

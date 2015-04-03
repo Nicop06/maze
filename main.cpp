@@ -15,12 +15,19 @@ void usage() {
 }
 
 int main(int argc, char* argv[]) {
+  bool fake = false;
+  if (std::string(argv[1]) == "-f") {
+    fake = true;
+    ++argv;
+    --argc;
+  }
+
   if (argc < 2)
     usage();
 
-  ClientThread ct;
+  ClientThread ct(fake);
   try {
-    if(std::string(argv[1]) == "-s") {
+    if (std::string(argv[1]) == "-s") {
       if (argc < 4 || argc > 5)
         usage();
 
