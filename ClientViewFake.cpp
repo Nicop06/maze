@@ -4,7 +4,7 @@
 #include <random>
 #include <chrono>
 
-ClientViewFake::ClientViewFake(ClientThread& clientThread) : ClientView(clientThread) {
+ClientViewFake::ClientViewFake(ClientThread& clientThread) : ClientView(clientThread), running(false) {
 }
 
 ClientViewFake::~ClientViewFake() {

@@ -16,7 +16,7 @@ void usage() {
 
 int main(int argc, char* argv[]) {
   bool fake = false;
-  if (std::string(argv[1]) == "-f") {
+  if (argc > 1 && std::string(argv[1]) == "-f") {
     fake = true;
     ++argv;
     --argc;

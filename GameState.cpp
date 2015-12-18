@@ -12,6 +12,9 @@ GameState::GameState(int N, int M) : N(N), M(M), T(0), P(0), treasures(M) {
   grid = new Cell**[N];
   for (int i = 0; i < N; ++i) {
     grid[i] = new Cell*[N];
+    for (int j = 0; j < N; ++j) {
+      grid[i][j] = NULL;
+    }
   }
 }
 
