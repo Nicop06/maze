@@ -131,27 +131,18 @@ int ClientViewNcurses::update(const char* state, const size_t size) {
   max_data = data + 2 * T;
 
   int maxx, maxy, begx, begy;
-  int x, y;
   getmaxyx(game_win, maxy, maxx);
   getbegyx(game_win, begy, begx);
 
+  wclear(game_win);
+  wclear(main_win);
+  box(game_win, 0, 0);
   mvwprintw(main_win, 0, 0, "Presss 'q' to exit");
 
-  // Clear the screen
-  box(game_win, 0, 0);
-  for (x = 1; x < 2*N; ++x) {
-    for (y = 1; y <= N; ++y) {
-      mvwaddch(game_win, y, x, ' ');
-    }
-  }
-
-  // Draw the map
-  if (T > 0) {
-    for ( ; data < max_data; data += 2) {
-      x = ntohl(*data);
-      y = ntohl(*(data + 1));
-      mvwaddch(game_win, y+1, 2*x+1, 'T');
-    }
+  for ( ; data < max_data; data += 2) {
+    int x = ntohl(*data);
+    int y = ntohl(*(data + 1));
+    mvwaddch(game_win, y+1, 2*x+1, 'T');
   }
 
   int status_y = maxy + 1;
@@ -162,30 +153,22 @@ int ClientViewNcurses::update(const char* state, const size_t size) {
   for ( ; data < max_data; data += 4) {
     int p_id = ntohl(*data);
     int p_T = ntohl(*(data + 1));
-    x = ntohl(*(data + 2));
-    y = ntohl(*(data + 3));
+    int x = ntohl(*(data + 2));
+    int y = ntohl(*(data + 3));
 
     if (p_T > best_score) {
       best_id = p_id;
       best_score = p_T;
     }
 
-    char player = 'P';
-
     if (p_id != id) {
-      mvwprintw(main_win, ++status_y, begx+1, "Player %d: %d   ", p_id, p_T);
+      mvwprintw(main_win, ++status_y, begx+1, "Player %d: %d", p_id, p_T);
+      mvwaddch(game_win, y+1, 2*x+1, 'P');
     } else {
-      mvwprintw(main_win, begy-1, begx+1, "Id: %d   Score: %d   ", p_id, p_T);
-      player = 'Y';
-    }
-
-    // Draw the player only if no one won
-    if (T > 0) {
-      mvwaddch(game_win, y+1, 2*x+1, player);
+      mvwprintw(main_win, begy-1, begx+1, "Id: %d   Score: %d", p_id, p_T);
+      mvwaddch(game_win, y+1, 2*x+1, 'Y');
     }
   }
-
-  mvwprintw(main_win, ++status_y, begx+1, "                      ");
 
   if (T == 0) {
     std::string msg;
@@ -195,6 +178,8 @@ int ClientViewNcurses::update(const char* state, const size_t size) {
       msg = "Player " + std::to_string(best_id) + " won";
     }
 
+    wclear(game_win);
+    box(game_win, 0, 0);
     mvwprintw(game_win, (maxy - 1) / 2, std::max(1, (int)((maxx - msg.length()) / 2)), "%s", msg.data());
   }
 
